@@ -2,9 +2,9 @@
 # @Time: 2018/12/28
 # @File: bin_tools
 
-from deploy.deploy_tools import Config, check_file_exists, check_action_result, DeployNode, DeployCli
-from deploy.test_api import RunApi, ApiTestData
-from deploy.remote_exec import RunCmd
+from main.deploy_tools import Config, check_file_exists, check_action_result, DeployNode, DeployCli
+from main.test_api import RunApi, ApiTestData
+from tools.remote_exec import RunCmd
 import os
 import sys
 

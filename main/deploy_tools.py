@@ -9,7 +9,7 @@ import sys
 import re
 import os
 import configparser
-from deploy.remote_exec import MySSH
+from tools.remote_exec import MySSH
 
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")

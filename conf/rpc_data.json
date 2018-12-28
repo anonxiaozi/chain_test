@@ -1,0 +1,22 @@
+{
+    "header": {
+        "Content-Type": "application/json"
+    },
+    "GetNodeStatus": {
+        "uri": "api/v1/GetNodeStatus"
+    },
+    "StartTxTest": {
+        "uri": "api/v1/StartTxTest",
+        "body": {
+            "TestType": "SequenceTestor",
+            "TestProperties": {}
+        }
+    },
+    "StopTxTest": {
+        "uri": "api/v1/StopTxTest",
+        "body": {}
+    },
+    "GetTxTestStatus": {
+        "uri": "api/v1/GetTxTestStatus"
+    }
+}

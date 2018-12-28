@@ -8,51 +8,32 @@ import urllib.parse
 import json
 import sys
 import time
+import os
+
+BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIGDIR = os.path.join(BASEDIR, "conf")
+sys.path.insert(0, BASEDIR)
 
 
 class ApiTestData(object):
 
     def __init__(self):
-        self.url_index = {
-            "GetNodeStatus": "api/v1/GetNodeStatus",
-            "StartTxTest": "api/v1/StartTxTest",
-            "StopTxTest": "api/v1/StopTxTest",
-            "GetTxTestStatus": "api/v1/GetTxTestStatus",
-        }
-        self.headers = {
-            "Content-Type": "application/json"
-        }
-
-    test_systemTransfer = {
-        "fromAddr": "0x7cc7836bc4e0f22df894fe3201e40f925d48eea0",
-        "destAddr": "0xe6be8a4bcd35696c78eb0076e1f15d1fef0730e9",
-        "amount": "1",
-    }
-
-    test_getbalance = {
-        "address": "0xe6be8a4bcd35696c78eb0076e1f15d1fef0730e9"
-    }
-
-    test_StartTxTest = {
-        "TestType": "SequenceTestor",
-        "TestProperties": {}
-    }
-
-    test_StopTxTest = {}
+        with open(os.path.join(CONFIGDIR, "rpc_data.json"), "r") as f:
+            self.rpc_data = json.load(f)
 
     def get_url(self, method):
-        url = self.url_index.get(method, None)
+        url = self.rpc_data[method].get("uri", None)
         return url
 
     def get_data(self, method):
-        data = getattr(self, "test_%s" % method, None)
-        if not data is None:
-            return json.dumps(data).encode("utf-8")
-        else:
+        data = self.rpc_data[method].get("body", None)
+        if data is None:
             return None
+        else:
+            return json.dumps(data).encode("utf-8")
 
     def action(self, method):
-        return self.get_url(method), self.get_data(method), self.headers
+        return self.get_url(method), self.get_data(method), self.rpc_data["header"]
 
 
 class RunApi(ApiTestData):
@@ -67,7 +48,7 @@ class RunApi(ApiTestData):
         url, data, headers = self.action(self.method)
         if not url:
             return "ERROR: method not found: %s" % self.method
-        req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, self.url_index[self.method]), data=data, headers=headers)
+        req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
         try:
             res = urllib.request.urlopen(req, timeout=10)
         except urllib.error.HTTPError as e:
