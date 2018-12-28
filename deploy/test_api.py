@@ -95,6 +95,7 @@ class RunApi(ApiTestData):
         print("\n" + str(count).center(50, "="))
         result = self.cli_api()
         self.echo_monit_result(result)
+        time.sleep(time_internal)
         count += 1
         while count < total:
             print("\n" + str(count).center(50, "="))
