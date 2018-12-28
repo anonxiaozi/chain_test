@@ -10,7 +10,7 @@ import sys
 import time
 
 
-class TestData(object):
+class ApiTestData(object):
 
     def __init__(self):
         self.url_index = {
@@ -46,7 +46,6 @@ class TestData(object):
 
     def get_data(self, method):
         data = getattr(self, "test_%s" % method, None)
-        # return bytes(urllib.parse.urlencode(json.dumps(data), encoding="utf-8"), "utf-8") if data else None
         if not data is None:
             return json.dumps(data).encode("utf-8")
         else:
@@ -56,7 +55,7 @@ class TestData(object):
         return self.get_url(method), self.get_data(method), self.headers
 
 
-class Run(TestData):
+class RunApi(ApiTestData):
 
     def __init__(self, host, port, method):
         super().__init__()
@@ -103,7 +102,7 @@ class Run(TestData):
 if __name__ == "__main__":
 
     host, port, method = "10.15.101.35", 60002, "GetNodeStatus"
-    use = Run(host, port, method)
+    use = RunApi(host, port, method)
     url, data, headers = use.action(method)
     if not url:
         print("Method not found: %s" % method)

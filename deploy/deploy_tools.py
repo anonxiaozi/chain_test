@@ -2,7 +2,6 @@
 # @Time: 2018/12/27
 # @File: deploy_tools
 
-import paramiko
 import mysql.connector
 from mysql.connector import errorcode
 import time
@@ -10,44 +9,10 @@ import sys
 import re
 import os
 import configparser
+from deploy.remote_exec import MySSH
 
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
-
-
-class MySSH(object):
-    """
-    通过SSH连接服务器
-    login_auth: 登陆
-    remote_exec: 执行命令，返回执行结果
-    """
-
-    def __init__(self, hostname, username, keyfile, port):
-        self.hostname = hostname
-        self.username = username
-        self.keyfile = keyfile
-        self.port = port
-
-    def login_auth(self):
-        private_key = paramiko.RSAKey.from_private_key_file(self.keyfile)
-        self.ssh = paramiko.SSHClient()
-        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(hostname=self.hostname, port=self.port, username=self.username, pkey=private_key)
-
-    def remote_exec(self, cmd):
-        """
-        执行命令
-        :param cmd: 传入命令
-        :return: 返回执行的结果，使用"utf8"解码
-        """
-        self.login_auth()
-        stdin, stdout, stderr = self.ssh.exec_command(cmd, timeout=60)
-        error = stderr.read()
-        if error:
-            result = error
-        else:
-            result = stdout.read()
-        return result.decode("utf-8").strip()
 
 
 class DeployNode(MySSH):
@@ -75,7 +40,9 @@ class DeployNode(MySSH):
         self.stop()
         self.clean()
         result = self.remote_exec(self.node_info["init_cmd"])
-        if result.split("\n")[-1] != "0":
+        if result.startswith("[CheckWarning]"):
+            return result
+        elif result.split("\n")[-1] != "0":
             return result  # 初始化失败
         else:
             start_status = self.start()
@@ -99,13 +66,15 @@ class DeployNode(MySSH):
         启动节点
         :return: 执行失败，返回错误信息，否则返回空
         """
-        self.remote_exec(self.node_info["start_cmd"])
+        result = self.remote_exec(self.node_info["start_cmd"])
+        if result.startswith("[CheckWarning]"):
+            return result
         start_status = self.check_started()
-        if start_status != '0':
+        if start_status != "0":
             return start_status
 
     def check_started(self):
-        result = self.remote_exec('pgrep noded$ &> /dev/null ; echo $?')
+        result = self.remote_exec("pgrep noded$ &> /dev/null ; echo $?")
         if result != "0":
             faild_info = self.remote_exec(self.get_faild_info % self.node_info["id"])
             return faild_info.split("\n")  # 启动失败，返回日志中panic信息，列表类型
@@ -154,7 +123,9 @@ class DeployCli(MySSH):
         self.start()
 
     def start(self):
-        self.remote_exec(self.cli_info["start_cmd"])
+        result = self.remote_exec(self.cli_info["start_cmd"])
+        if result.startswith("[CheckWarning]"):
+            return result
         return self.check_start()
 
 
@@ -210,9 +181,7 @@ class Config(object):
     list_config: 打印配置文件内容
     """
 
-    filename = os.path.join(os.path.join(BASEDIR, "conf"), "config.ini")
-
-    def __init__(self, filename):
+    def __init__(self, filename="config.ini"):
         self.filename = os.path.join(CONFIGDIR, filename)
         self.config = configparser.ConfigParser()
 
@@ -286,7 +255,7 @@ def check_file_exists(*filename):
 
 def check_action_result(result, config, action):
     if result and result != "Hello.":
-        print("%s [%s] faild. Error:" % (action, config["address"]))
+        print("%s %s [%s] faild. Error:" % (action, config.name, config["address"]))
         for err in result:
             print(err)
             sys.exit(1)
