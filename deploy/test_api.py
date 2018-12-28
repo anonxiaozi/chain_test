@@ -76,27 +76,34 @@ class RunApi(ApiTestData):
             return "ERROR: %s" % e
         return json.loads(res.read().decode("utf-8"))
 
+    @staticmethod
+    def echo_monit_result(result):
+        if not result:
+            sys.exit()
+        else:
+            for key, value in result.items():
+                if isinstance(value, dict):
+                    for subkey, subvalue in value.items():
+                        print(subkey, subvalue, sep=": ", end="\n")
+                else:
+                    print(key, value, sep=": ", end="\n")
+
     def monit_result(self, time_internal, total=0):
         if not total:
             total = 999999999999
         count = 0
+        print("\n" + str(count).center(50, "="))
+        result = self.cli_api()
+        self.echo_monit_result(result)
+        count += 1
         while count < total:
-            print("\n" + str(count).center(30, "="))
+            print("\n" + str(count).center(50, "="))
             result = self.cli_api()
-            if not result:
-                break
-            else:
-                for key, value in result.items():
-                    if isinstance(value, dict):
-                        for subkey, subvalue in value.items():
-                            print(subkey, subvalue, sep=": ", end="")
-                    else:
-                        print(key, value, sep=": ", end="")
+            self.echo_monit_result(result)
             time.sleep(time_internal)
             count += 1
-        else:
-            print()
-            sys.exit()
+        print()
+        sys.exit()
 
 
 if __name__ == "__main__":

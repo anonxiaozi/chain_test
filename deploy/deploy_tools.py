@@ -52,8 +52,11 @@ class DeployNode(MySSH):
         """
         清除noded数据
         """
-        clean_cmd = "cd /root/work; ./noded clear -id %s" % self.node_info["id"] + "; tar zcf log_$(date +%Y%m%d%H%M).tgz logs; rm -f logs/*.log; " + "rm -f wallet_%s.dat" % self.node_info["id"]
+        clean_cmd = "cd /root/work; ./noded clear -id %s" % self.node_info["id"] + "; tar zcf log_$(date +%Y%m%d%H%M).tgz logs; rm -f logs/*.log"
         self.remote_exec(clean_cmd)
+        if self.node_info.getboolean("del_wallet"):
+            del_wallet_cmd = "cd /root/work; rm -f wallet_%s.dat" % self.node_info["id"]
+            self.remote_exec(del_wallet_cmd)
 
     def stop(self):
         """
@@ -208,6 +211,7 @@ class Config(object):
             "ssh_port": "22",
             "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
             "id": 3005,
+            "del_wallet": False,
             "init_cmd": "noded init...",
             "start_cmd": "noded run..."
         }
@@ -218,6 +222,7 @@ class Config(object):
                 "ssh_port": "22",
                 "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
                 "id": "300%d" % i,
+                "del_wallet": False,
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }
@@ -228,6 +233,7 @@ class Config(object):
                 "ssh_port": "22",
                 "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
                 "id": "300%d" % i,
+                "del_wallet": False,
                 "start_cmd": "cli service..."
             }
         self.write()

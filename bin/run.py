@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 client_result = getattr(client, action, DeployNode.echo)()
                 check_action_result(client_result, config[cli], action)
     except KeyboardInterrupt:
-        print("Exit.")
+        print("\nExit.")
     except KeyError as e:
         print("KeyError: %s" % e)
     except AttributeError as e:
