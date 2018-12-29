@@ -40,12 +40,14 @@ def get_args():
     api_test.add_argument("host", type=str, help="server addr")
     api_test.add_argument("port", type=int, help="server port")
     api_test.add_argument("method", type=str, help="api name")
+    api_test.add_argument("--sign", type=str, help="api function, default: %(default)s", default=None)
 
     # monit api
     monit_api = subarg.add_parser("monitapi", help="monit api result")
     monit_api.add_argument("host", type=str, help="server addr")
     monit_api.add_argument("port", type=int, help="server port")
     monit_api.add_argument("method", type=str, help="api name")
+    monit_api.add_argument("--sign", type=str, help="api function, default: %(default)s", default=None)
     monit_api.add_argument("-i", "--interval", type=int, help="monitoring interval", required=True)
     monit_api.add_argument("-n", "--total", type=int, help="Total number of monitoring, default: %(default)s, means unlimited", default=0)
 

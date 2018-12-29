@@ -39,7 +39,7 @@ class DeployNode(MySSH):
         """
         self.stop()
         self.clean()
-        result = self.remote_exec(self.node_info["init_cmd"])
+        result = self.remote_exec(self.node_info["init_cmd"] % self.node_info["create_wallet"])
         if result.startswith("[CheckWarning]"):
             return result
         elif result.split("\n")[-1] != "0":
@@ -212,6 +212,7 @@ class Config(object):
             "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
             "id": 3005,
             "del_wallet": False,
+            "create_wallet": 0,
             "init_cmd": "noded init...",
             "start_cmd": "noded run..."
         }
@@ -223,6 +224,7 @@ class Config(object):
                 "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
                 "id": "300%d" % i,
                 "del_wallet": False,
+                "create_wallet": 0,
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }

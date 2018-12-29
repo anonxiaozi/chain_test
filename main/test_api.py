@@ -10,6 +10,8 @@ import sys
 import time
 import os
 
+# import importlib
+
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
@@ -25,49 +27,73 @@ class ApiTestData(object):
         url = self.rpc_data[method].get("uri", None)
         return url
 
-    def get_data(self, method):
+    def get_data(self, method, sign):
         data = self.rpc_data[method].get("body", None)
+        if data:
+            if len(data) > 1:  # 同一接口，多个body
+                if not sign:  # 没有指定body
+                    print("Missing parameters: sign")
+                    sys.exit()
+                data = self.rpc_data[method].get("body", None)[sign]
+            else:
+                data = self.rpc_data[method].get("body", None)
         if data is None:
             return None
         else:
             return json.dumps(data).encode("utf-8")
 
-    def action(self, method):
-        return self.get_url(method), self.get_data(method), self.rpc_data["header"]
+    def action(self, method, sign):
+        return self.get_url(method), self.get_data(method, sign), self.rpc_data["header"]
 
 
 class RunApi(ApiTestData):
 
-    def __init__(self, host, port, method):
+    def __init__(self, host, port, method, sign):
         super().__init__()
         self.host = host
         self.port = port
         self.method = method
+        self.sign = sign
 
     def cli_api(self):
-        url, data, headers = self.action(self.method)
+        url, data, headers = self.action(self.method, self.sign)
         if not url:
             return "ERROR: method not found: %s" % self.method
         req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
+        func_name = self.method
         try:
             res = urllib.request.urlopen(req, timeout=10)
         except urllib.error.HTTPError as e:
-            return json.loads(e.fp.read().decode("utf-8"))      # 返回接口错误抛出的内容
+            return json.loads(e.fp.read().decode("utf-8"))
         except Exception as e:
-            return "ERROR: %s" % e
+            return "Error: %s" % e
         return json.loads(res.read().decode("utf-8"))
+        # try:
+        #     module = importlib.import_module("rpc_modules.%s" % func_name)
+        # except ModuleNotFoundError:
+        #     func_name = "general"
+        #     module = importlib.import_module("rpc_modules.general")
+        # try:
+        #     res = urllib.request.urlopen(req, timeout=10)
+        # except urllib.error.HTTPError as e:
+        #     return getattr(module, func_name)(e.fp.read().decode("utf-8"))  # 返回接口错误抛出的内容
+        # except Exception as e:
+        #     return "ERROR: %s" % e
+        # return getattr(module, func_name)(res.read().decode("utf-8"))
 
     @staticmethod
-    def echo_monit_result(result):
+    def echo_monit_result(result, field=None):
+        """
+        打印结果输出，因为是json格式，可以传入field(列表形式)，来指定打印输出
+        """
         if not result:
-            sys.exit()
+            print(None)
+        elif field:
+            for key in field.split(","):
+                key = key.strip()
+                print(key, result.get(key, ""), sep=": ", end="\n")
         else:
-            for key, value in result.items():
-                if isinstance(value, dict):
-                    for subkey, subvalue in value.items():
-                        print(subkey, subvalue, sep=": ", end="\n")
-                else:
-                    print(key, value, sep=": ", end="\n")
+            print(json.dumps(result, indent=2))
 
     def monit_result(self, time_internal, total=0):
         if not total:
@@ -91,8 +117,8 @@ class RunApi(ApiTestData):
 if __name__ == "__main__":
 
     host, port, method = "10.15.101.35", 60002, "GetNodeStatus"
-    use = RunApi(host, port, method)
-    url, data, headers = use.action(method)
+    use = RunApi(host, port, method, None)
+    url, data, headers = use.action(method, None)
     if not url:
         print("Method not found: %s" % method)
         sys.exit(2)

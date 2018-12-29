@@ -7,6 +7,7 @@ from main.test_api import RunApi, ApiTestData
 from tools.remote_exec import RunCmd
 import os
 import sys
+import json
 
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
@@ -33,17 +34,11 @@ class EveryOne(object):
         """
         测试RPC接口
         """
-        api = RunApi(self.args["host"], self.args["port"], self.args["method"])
+        api = RunApi(self.args["host"], self.args["port"], self.args["method"], self.args["sign"])
         result = api.cli_api()
         if isinstance(result, dict):  # 有值
-            for key, value in result.items():
-                if isinstance(value, dict):
-                    for subkey, subvalue in value.items():
-                        print(subkey, subvalue, sep=": ", end="\n")
-                else:
-                    print(key, value, sep=": ", end="\n")
-            else:
-                return 0
+            print(json.dumps(result, indent=2))
+            return 0
         else:
             print(result)
             return 1
@@ -52,7 +47,7 @@ class EveryOne(object):
         """
         定时返回RPC接口信息
         """
-        api = RunApi(self.args["host"], self.args["port"], self.args["method"])
+        api = RunApi(self.args["host"], self.args["port"], self.args["method"], self.args["sign"])
         api.monit_result(self.args["interval"], self.args["total"])
         return
 
@@ -61,7 +56,7 @@ class EveryOne(object):
         打印RPC接口或配置文件内容
         """
         if self.args["listobj"] == "api":
-            data = [x for x in ApiTestData().url_index]
+            data = [x for x in ApiTestData().rpc_data.keys() if x != "header"]
             print(data)
             return 0
         elif self.args["listobj"] == "config":

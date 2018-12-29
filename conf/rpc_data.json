@@ -8,8 +8,18 @@
     "StartTxTest": {
         "uri": "api/v1/StartTxTest",
         "body": {
-            "TestType": "SequenceTestor",
-            "TestProperties": {}
+            "unit_test": {
+                "TestType": "SequenceTestor",
+                "TestProperties": {}
+            },
+            "pressure_test": {
+                "TestType": "token_transfer",
+                "TestProperties": {
+                    "TxCount": "20",
+                    "AccCount": "30",
+                    "SendSpan": "100"
+                }
+            }
         }
     },
     "StopTxTest": {
