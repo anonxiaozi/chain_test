@@ -5,33 +5,25 @@
 import sys
 import os
 import time
-
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
-from client.pressure_test import PressureTest
 from main.test_api import RunApi
-import argparse
 import threading
+from client.base import RPCTest
 
 
-class UnitTest(PressureTest):
+class UnitTest(RPCTest):
 
     def __init__(self):
         super().__init__()
-        self.start_method, self.start_sign = "StartTxTest", "unit_test"
-        self.status_method, self.status_sign = "GetNodeStatus", None
-        self.stop_method, self.stop_sign = "StopTxTest", None
-        self.args = vars(self.get_args().parse_args())
-
-    def get_args(self):
-        arg = argparse.ArgumentParser(prog="测试")
-        arg.add_argument("host", type=str, help="服务器地址")
-        arg.add_argument("port", type=int, help="服务器端口")
-        # arg.add_argument("-t", "--totaltime", type=int, help="测试总时间，单位秒，默认: %(default)s s", default=300)
-        # arg.add_argument("-i", "--interval", type=int, help="多长时间打印一次状态，默认: %(default)s s", default=2)
-        # arg.add_argument("-s", "--fetch", type=str, help="需要打印的字段，多个字段用逗号分隔，默认: %(default)s，表示所有", default=[])
-        return arg
+        self.start_method = "StartTxTest"
+        self.start_sign = "unit_test"
+        self.status_method = "GetTxTestStatus"
+        self.status_sign = None
+        self.stop_method = "StopTxTest"
+        self.stop_sign = None
+        self.args = vars(self.arg.parse_args())
 
     @staticmethod
     def cost():
@@ -62,9 +54,6 @@ class UnitTest(PressureTest):
         cost = threading.Thread(target=self.cost)
         cost.setDaemon(True)
         cost.start()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
 
 
 if __name__ == "__main__":
