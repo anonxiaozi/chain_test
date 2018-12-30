@@ -10,7 +10,6 @@ import re
 import os
 import configparser
 from tools.remote_exec import MySSH
-
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 
@@ -72,17 +71,17 @@ class DeployNode(MySSH):
         result = self.remote_exec(self.node_info["start_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
-        start_status = self.check_started()
-        if start_status != "0":
+        start_status = self.status()
+        if start_status:
             return start_status
 
-    def check_started(self):
+    def status(self):
         result = self.remote_exec("pgrep noded$ &> /dev/null ; echo $?")
         if result != "0":
             faild_info = self.remote_exec(self.get_faild_info % self.node_info["id"])
             return faild_info.split("\n")  # 启动失败，返回日志中panic信息，列表类型
         else:
-            return result
+            return
 
     @staticmethod
     def wait(n):
@@ -112,7 +111,7 @@ class DeployCli(MySSH):
     def stop(self):
         self.remote_exec('kill -9 $(pgrep ^cli$)')
 
-    def check_start(self):
+    def status(self):
         result = self.remote_exec('pgrep -a ^cli$')
         start_id = self.match_id.findall(result)
         if start_id and self.cli_info["id"] in start_id:
@@ -129,7 +128,7 @@ class DeployCli(MySSH):
         result = self.remote_exec(self.cli_info["start_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
-        return self.check_start()
+        return self.status()
 
 
 class OperateMysql(object):
