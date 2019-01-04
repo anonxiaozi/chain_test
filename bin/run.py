@@ -27,9 +27,9 @@ def get_args():
     cmd.add_argument("-a", "--attach", type=str, help="The command to execute", required=True)
 
     # deployment
-    deploy = subarg.add_parser("main", help="Deployment environment")
+    deploy = subarg.add_parser("deploy", help="Deployment environment")
     deploy.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
-    deploy.add_argument("action", choices=["start", "stop", "clean", "reset", "status"], help="action")
+    deploy.add_argument("action", choices=["start", "stop", "clean", "reset", "status", "init"], help="action")
 
     # generate_config
     generate_config = subarg.add_parser("generate_config", help="Generate configuration file")
@@ -75,5 +75,7 @@ if __name__ == '__main__':
         print("KeyError: %s" % e)
     except AttributeError as e:
         print("AttributeError: %s" % e)
-    finally:
-        sys.exit()
+    # except Exception as e:
+    #     print("Error: %s" % e)
+    # finally:
+    #     sys.exit()

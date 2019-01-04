@@ -84,15 +84,18 @@ class EveryOne(object):
         node_list, cli_list = [], []
         config = self.do_read_config()
         node_list.extend([x for x in config.keys() if x.startswith("node")])
-        genesis = DeployNode(config["genesis"])
-        genesis_result = getattr(genesis, action, DeployNode.echo)()
-        check_action_result(genesis_result, config["genesis"], action)
-        if action in ["reset", "start"]:
-            DeployNode.wait(2)
+        if "genesis" in config:
+            genesis = DeployNode(config["genesis"])
+            genesis_result = getattr(genesis, action, DeployNode.echo)()
+            check_action_result(genesis_result, config["genesis"], action)
+            if action in ["reset", "start", "init"]:
+                DeployNode.wait(2)
         for node in node_list:
-            noded_result = DeployNode(config[node])
+            noded_obj = DeployNode(config[node])
+            noded_result = getattr(noded_obj, action, DeployNode.echo)()
             check_action_result(noded_result, config[node], action)
         cli_list.extend([x for x in config.keys() if x.startswith("cli")])
+        DeployNode.wait(3)
         for cli in cli_list:
             client = DeployCli(config[cli])
             client_result = getattr(client, action, DeployNode.echo)()

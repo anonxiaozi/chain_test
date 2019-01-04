@@ -33,12 +33,17 @@ class DeployNode(MySSH):
 
     def reset(self):
         """
-        重置节点，首先stop，之后clean
-        return: 初始化失败，返回输出信息，否则执行start
+        重置节点，首先stop，然后clean，之后init，最后start
         """
         self.stop()
         self.clean()
-        result = self.remote_exec(self.node_info["init_cmd"] % self.node_info["create_wallet"])
+        self.init()
+
+    def init(self):
+        """
+        初始化节点
+        """
+        result = self.remote_exec(self.node_info["init_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
         elif result.split("\n")[-1] != "0":
@@ -74,21 +79,37 @@ class DeployNode(MySSH):
         start_status = self.status()
         if start_status:
             return start_status
+        else:
+            print("start noded [%s] successfully." % self.node_info["address"])
 
     def status(self):
-        result = self.remote_exec("pgrep noded$ &> /dev/null ; echo $?")
+        result = self.remote_exec("pgrep -a noded$ | grep %s &> /dev/null ; echo $?" % self.node_info["id"])
         if result != "0":
             faild_info = self.remote_exec(self.get_faild_info % self.node_info["id"])
             return faild_info.split("\n")  # 启动失败，返回日志中panic信息，列表类型
-        else:
-            return
 
     @staticmethod
     def wait(n):
         for i in range(1, n + 1).__reversed__():
             time.sleep(1)
-            sys.stdout.write(str(i).center(20, "*") + '\r')
+            sys.stdout.write(str(i).center(20, "*") + "\r")
             sys.stdout.flush()
+
+    def check_mongo(self):
+        """
+        检查mongod是否启动
+        """
+        result = self.remote_exec("pgrep mongod &> /dev/null; echo $?")
+        if result != "0":
+            return "Mongod service did not start [%s]." % self.node_info["address"]
+
+    def start_mongo(self):
+        """
+        启动mongod，使用默认的dbpath：/data/db
+        """
+        result = self.remote_exec("mkdir -p /data/db && mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null")
+        if result != "0":
+            return "Mongod service start failed [%s]." % self.node_info["address"]
 
     @staticmethod
     def echo():
@@ -122,6 +143,10 @@ class DeployCli(MySSH):
 
     def reset(self):
         self.stop()
+        time.sleep(2)
+        self.start()
+
+    def init(self):
         self.start()
 
     def start(self):
@@ -201,9 +226,9 @@ class Config(object):
             return
 
     def generate_config(self):
-        self.config["global"] = {
-            "leader": "127.0.0.1:3000"
-        }
+        # self.config["global"] = {
+        #     "leader": "127.0.0.1:3000"
+        # }
         self.config["genesis"] = {
             "address": "127.0.0.1",
             "ssh_user": "root",
@@ -212,8 +237,8 @@ class Config(object):
             "id": 3005,
             "del_wallet": False,
             "create_wallet": 0,
-            "init_cmd": "noded init...",
-            "start_cmd": "noded run..."
+            "init_cmd": "cd /root/work; ./noded init -account root -role miner -id 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
+            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -leader 10.15.101.114:3005 -rpc 1 -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 &> /dev/null &"
         }
         for i in range(1, 3):
             self.config["node0%d" % i] = {
