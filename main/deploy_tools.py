@@ -25,7 +25,7 @@ class DeployNode(MySSH):
     """
 
     stop_cmd = 'kill -9 $(pgrep noded$)'
-    get_faild_info = "cd /root/work/logs; grep -i -E 'panic|warn' `ls -lt | grep node_%s | head -1 | awk '{print $NF}'`"
+    get_faild_info = "cd /root/work/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
     def __init__(self, node_info):
         super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
@@ -238,7 +238,8 @@ class Config(object):
             "del_wallet": False,
             "create_wallet": 0,
             "init_cmd": "cd /root/work; ./noded init -account root -role miner -id 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
-            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -leader 10.15.101.114:3005 -rpc 1 -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 &> /dev/null &"
+            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 \
+                            -p2paddr 10.15.101.114:3005 -p2pid xxxxxxxx &> /dev/null &"
         }
         for i in range(1, 3):
             self.config["node0%d" % i] = {
