@@ -5,18 +5,18 @@
 import mysql.connector
 from mysql.connector import errorcode
 import time
+import datetime
 import sys
 import re
 import os
-import random
 import configparser
 from tools.remote_exec import MySSH
+
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 
 
 class DeployNode(MySSH):
-
     """
     操作noded，需要提供noded的配置信息(node_info)
     reset: 重置节点，stop -> clean -> init -> start
@@ -25,30 +25,27 @@ class DeployNode(MySSH):
     start: 启动节点
     """
 
-    stop_cmd = 'kill -9 $(pgrep noded$)'
+    stop_cmd = 'kill -9 $(pgrep noded$) ; kill -9 $(pgrep pbcli$)'
     get_faild_info = "cd /root/work/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
-    def __init__(self, node_info):
+    def __init__(self, genesis_info, node_info):
         super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
         self.node_info = node_info
+        self.genesis_info = genesis_info
 
-    def reset(self):
-        """
-        重置节点，首先stop，然后clean，之后init，最后start
-        """
-        self.stop()
-        self.clean()
-        self.init()
+    # def reset(self):
+    #     """
+    #     重置节点，首先stop，然后clean，之后init，最后start
+    #     """
+    #     self.stop()
+    #     self.clean()
+    #     self.init()
 
     def init(self):
         """
         初始化节点
         """
-        mongo_status = self.check_mongo()
-        if mongo_status:
-            mongo_start = self.start_mongo()
-            if mongo_start:
-                return mongo_start
+        self.check_mongo()
         result = self.remote_exec(self.node_info["init_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
@@ -62,7 +59,7 @@ class DeployNode(MySSH):
         """
         清除noded数据
         """
-        clean_cmd = "cd /root/work; ./noded clear -id %s" % self.node_info["id"] + "; tar zcf log_$(date +%Y%m%d%H%M).tgz logs; rm -f logs/*.log"
+        clean_cmd = "cd /root/work; ./noded clear -id %s; rm -f logs/*" % self.node_info["id"]
         self.remote_exec(clean_cmd)
         if self.node_info.getboolean("del_wallet"):
             del_wallet_cmd = "cd /root/work; rm -f wallet_%s.dat" % self.node_info["id"]
@@ -79,6 +76,7 @@ class DeployNode(MySSH):
         启动节点
         :return: 执行失败，返回错误信息，否则返回空
         """
+        self.check_mongo()
         result = self.remote_exec(self.node_info["start_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
@@ -107,12 +105,14 @@ class DeployNode(MySSH):
         """
         result = self.remote_exec("pgrep mongod &> /dev/null; echo $?")
         if result != "0":
-            return "Mongod service did not start [%s]." % self.node_info["address"]
+            print("Mongod service did not start [%s]." % self.node_info["address"])
+            self.start_mongo()
 
     def start_mongo(self):
         """
         启动mongod，使用默认的dbpath：/data/db
         """
+        print("Start mongodb...")
         result = self.remote_exec("mkdir -p /opt/mongo_data; touch /opt/mongo.log ; mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null")
         if result != "0":
             return "Mongod service start failed [%s]." % self.node_info["address"]
@@ -122,7 +122,7 @@ class DeployNode(MySSH):
         return "Hello."
 
 
-class GetP2pid(object):
+class Deposit(object):
 
     def __init__(self, genesis_info, node_info):
         self.genesis_info = genesis_info
@@ -134,6 +134,11 @@ class GetP2pid(object):
         return ssh
 
     def get_pubkey(self, account, node_info):
+        """
+        启动节点时，p2pid 选项使用
+        """
+        if not account:
+            account = "root"
         ssh = self.get_ssh_obj(node_info)
         get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -id %s -name %s -password 123456 | grep ': 0x' | awk '{print $NF}'" % (self.node_info["id"], account)
         result = ssh.remote_exec(get_pubkey_cmd)
@@ -145,16 +150,20 @@ class GetP2pid(object):
 
     def get_addr(self, account, node_info):
         get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname %s -id %s | awk -F'address : ' '{print $NF}'" % (account, node_info["id"])
-        if get_addr_cmd.startswith("0x"):
-            return get_addr_cmd
+        ssh = self.get_ssh_obj(node_info)
+        result = ssh.remote_exec(get_addr_cmd)
+        if result.startswith("0x"):
+            return result
         else:
-            print("Get addr failed. [%s]" % get_addr_cmd)
+            print("Get addr failed. [%s] %s" % (get_addr_cmd, result))
             sys.exit(1)
 
-    def send(self, account):
-        root_addr = self.get_addr("root", self.genesis_info)
-        to_addr = self.get_addr(account, self.node_info)
-        send_cmd = "./cli send -amount 20000 -from %s -id %s -password 123456 -toaddr %s ; echo $?" % (root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+    def send(self, account=None, amount=20000):
+        if not account:
+            account = self.node_info["id"]
+        root_addr = self.get_addr("root", self.genesis_info)  # root address
+        to_addr = self.get_addr(account, self.node_info)  # deposit account address
+        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -id %s -password 123456 -toaddr %s ; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
@@ -162,11 +171,17 @@ class GetP2pid(object):
             sys.exit(1)
 
     def deposit(self, amount=10000):
-        random_id = random.random()
+        # current_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        # deposit_id = "%s_%s" % (self.node_info["id"], current_time)
+        deposit_id = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
-        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s; echo $?" % (amount, self.node_info["id"], random_id, self.node_info["id"], source_addr)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s" % (amount, self.node_info["id"], deposit_id, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
+        print("Deposit result [%s]:")
+        for item in result.split("\n"):
+            print(item)
+        return deposit_id
 
 
 class DeployCli(MySSH):
@@ -183,21 +198,21 @@ class DeployCli(MySSH):
         self.cli_info = cli_info
 
     def stop(self):
-        self.remote_exec('kill -9 $(pgrep ^cli$)')
+        self.remote_exec('kill -9 $(pgrep ^pbcli$)')
 
     def status(self):
-        result = self.remote_exec('pgrep -a ^cli$')
+        result = self.remote_exec('pgrep -a ^pbcli$')
         start_id = self.match_id.findall(result)
         if start_id and self.cli_info["id"] in start_id:
             return
         else:
             data = self.remote_exec(self.get_faild_info % self.cli_info["id"])
-            return data.split("\n")     # 返回错误信息
+            return data.split("\n")  # 返回错误信息
 
-    def reset(self):
-        self.stop()
-        time.sleep(2)
-        self.start()
+    # def reset(self):
+    #     self.stop()
+    #     time.sleep(2)
+    #     self.start()
 
     def init(self):
         self.start()
@@ -290,9 +305,10 @@ class Config(object):
             "id": 3005,
             "del_wallet": False,
             "create_wallet": 0,
+            "deposit": False,
             "init_cmd": "cd /root/work; ./noded init -account root -role miner -id 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
-            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 \
-                            -p2paddr 10.15.101.114:3005 -p2pid xxxxxxxx &> /dev/null &"
+            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 \
+                             -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 &> /dev/null &"
         }
         for i in range(1, 3):
             self.config["node0%d" % i] = {
@@ -303,6 +319,7 @@ class Config(object):
                 "id": "300%d" % i,
                 "del_wallet": False,
                 "create_wallet": 0,
+                "deposit": True,
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }
@@ -340,10 +357,14 @@ def check_file_exists(*filename):
 
 
 def check_action_result(result, config, action):
-    if result and result != "Hello.":
-        print("%s %s [%s] faild. Error:" % (action, config.name, config["address"]))
-        for err in result:
-            print(err)
-            sys.exit(1)
-    else:
-        print("%s %s [%s] successfully." % (action, config.name, config["address"]))
+    try:
+        if result and result != "Hello.":
+            print("%s %s [%s] faild. Error:" % (action, config.name, config["address"]))
+            for err in result:
+                print(err)
+                sys.exit(1)
+        else:
+            print("%s %s [%s] successfully." % (action, config.name, config["address"]))
+    except Exception as e:
+        print("ERROR.")
+        sys.exit()

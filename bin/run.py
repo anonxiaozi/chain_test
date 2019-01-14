@@ -29,7 +29,7 @@ def get_args():
     # deployment
     deploy = subarg.add_parser("deploy", help="Deployment environment")
     deploy.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
-    deploy.add_argument("action", choices=["start", "stop", "clean", "reset", "status", "init"], help="action")
+    deploy.add_argument("action", choices=["start", "stop", "clean", "status", "init"], help="action")
 
     # generate_config
     generate_config = subarg.add_parser("generate_config", help="Generate configuration file")
@@ -55,6 +55,10 @@ def get_args():
     list_func = subarg.add_parser("list", help="list valid api")
     list_func.add_argument("listobj", type=str, choices=["api", "config"])
     list_func.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
+
+    # # deposit
+    # deposit = subarg.add_parser("deposit", help="deposit")
+    # deposit.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
 
     return arg
 
