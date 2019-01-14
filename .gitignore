@@ -6,3 +6,4 @@ conf/id_rsa_jump
 daily_test
 do_test.py
 __pycache__
+conf/hongyang.ini

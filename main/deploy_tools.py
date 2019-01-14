@@ -8,6 +8,7 @@ import time
 import sys
 import re
 import os
+import random
 import configparser
 from tools.remote_exec import MySSH
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,6 +44,11 @@ class DeployNode(MySSH):
         """
         初始化节点
         """
+        mongo_status = self.check_mongo()
+        if mongo_status:
+            mongo_start = self.start_mongo()
+            if mongo_start:
+                return mongo_start
         result = self.remote_exec(self.node_info["init_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
@@ -107,13 +113,60 @@ class DeployNode(MySSH):
         """
         启动mongod，使用默认的dbpath：/data/db
         """
-        result = self.remote_exec("mkdir -p /data/db && mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null")
+        result = self.remote_exec("mkdir -p /opt/mongo_data; touch /opt/mongo.log ; mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null")
         if result != "0":
             return "Mongod service start failed [%s]." % self.node_info["address"]
 
     @staticmethod
     def echo():
         return "Hello."
+
+
+class GetP2pid(object):
+
+    def __init__(self, genesis_info, node_info):
+        self.genesis_info = genesis_info
+        self.node_info = node_info
+
+    @staticmethod
+    def get_ssh_obj(node_info):
+        ssh = MySSH(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
+        return ssh
+
+    def get_pubkey(self, account, node_info):
+        ssh = self.get_ssh_obj(node_info)
+        get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -id %s -name %s -password 123456 | grep ': 0x' | awk '{print $NF}'" % (self.node_info["id"], account)
+        result = ssh.remote_exec(get_pubkey_cmd)
+        if result:
+            return result
+        else:
+            print("Get p2paddr failed. [%s]" % get_pubkey_cmd)
+            sys.exit(1)
+
+    def get_addr(self, account, node_info):
+        get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname %s -id %s | awk -F'address : ' '{print $NF}'" % (account, node_info["id"])
+        if get_addr_cmd.startswith("0x"):
+            return get_addr_cmd
+        else:
+            print("Get addr failed. [%s]" % get_addr_cmd)
+            sys.exit(1)
+
+    def send(self, account):
+        root_addr = self.get_addr("root", self.genesis_info)
+        to_addr = self.get_addr(account, self.node_info)
+        send_cmd = "./cli send -amount 20000 -from %s -id %s -password 123456 -toaddr %s ; echo $?" % (root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+        ssh = self.get_ssh_obj(self.genesis_info)
+        result = ssh.remote_exec(send_cmd)
+        if result.split("\n")[-1] != "0":
+            print("send failed. [ %s ]" % send_cmd)
+            sys.exit(1)
+
+    def deposit(self, amount=10000):
+        random_id = random.random()
+        source_addr = self.get_addr(self.node_info["id"], self.node_info)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s; echo $?" % (amount, self.node_info["id"], random_id, self.node_info["id"], source_addr)
+        ssh = self.get_ssh_obj(self.node_info)
+        result = ssh.remote_exec(deposit_cmd)
 
 
 class DeployCli(MySSH):

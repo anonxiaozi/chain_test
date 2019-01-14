@@ -75,7 +75,7 @@ if __name__ == '__main__':
         print("KeyError: %s" % e)
     except AttributeError as e:
         print("AttributeError: %s" % e)
-    # except Exception as e:
-    #     print("Error: %s" % e)
-    # finally:
-    #     sys.exit()
+    except Exception as e:
+        print("Error: %s" % e)
+    finally:
+        sys.exit()
