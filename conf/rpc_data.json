@@ -28,5 +28,19 @@
     },
     "GetTxTestStatus": {
         "uri": "api/v1/GetTxTestStatus"
+    },
+    "GetBlockInfoByHeight": {
+        "uri": "api/v1/GetBlockInfoByHeight",
+        "body": {
+            "key": "0"
+        }
+    },
+    "GetDepositAccount": {
+        "uri": "api/v1/GetDepositAccount",
+        "body": {
+            "DepositID": {
+                "Value": "6051053228330400958"
+            }
+        }
     }
 }

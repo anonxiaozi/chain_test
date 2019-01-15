@@ -29,13 +29,13 @@ class RPCTest(object):
 
     @staticmethod
     def get_args():
-        default_config_file = os.path.join(CONFIGDIR, "config.ini")
+        # default_config_file = os.path.join(CONFIGDIR, "config.ini")
         arg = argparse.ArgumentParser(prog="测试")
         arg.add_argument("host", type=str, help="服务器地址")
         arg.add_argument("port", type=int, help="服务器端口")
-        arg.add_argument("-c", "--config", type=str,
-            help="config file name, the file directory is %s , Default: %s" % (
-            CONFIGDIR, default_config_file), default=default_config_file, required=True)
+        # arg.add_argument("-c", "--config", type=str,
+        #     help="config file name, the file directory is %s , Default: %s" % (
+        #     CONFIGDIR, default_config_file), default=default_config_file, required=True)
         return arg
 
     def deploy(self, action):
@@ -59,7 +59,9 @@ class RPCTest(object):
         try:
             self.deploy("status")
         except SystemExit:
-            self.deploy("reset")
+            self.deploy("stop")
+            self.deploy("clean")
+            self.deploy("init")
 
     def get_test_obj(self, method, sign):
         func = RunApi(self.args["host"], self.args["port"], method, sign)
@@ -68,7 +70,8 @@ class RPCTest(object):
     def start(self):
         func = self.get_test_obj(self.start_method, self.start_sign)
         start_result = func.cli_api()
-        self.check(self.start_method, start_result)
+        return start_result
+        # self.check(self.start_method, start_result)
 
     def status(self):
         """
@@ -89,7 +92,7 @@ class RPCTest(object):
         self.check(self.stop_method, stop_result)
 
     def run(self):
-        self.check_service()
+        # self.check_service()  # 用来检测配置文件中指定的服务是否启动，如果没有启动，则会尝试初始化环境
         self.stop()
         self.start()
         self.status()

@@ -77,8 +77,3 @@ class RunCmd(MySSH):
             self.ssh.close()
         except Exception:
             print()
-
-
-if __name__ == "__main__":
-    result = RunCmd("ifconfig").run_cmd()
-    print(result)

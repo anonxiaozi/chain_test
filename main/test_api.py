@@ -55,12 +55,13 @@ class RunApi(ApiTestData):
         self.method = method
         self.sign = sign
 
-    def cli_api(self):
+    def cli_api(self, body=None):
         url, data, headers = self.action(self.method, self.sign)
+        if body:
+            data = body
         if not url:
             return "ERROR: method not found: %s" % self.method
         req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
-        func_name = self.method
         try:
             res = urllib.request.urlopen(req, timeout=10)
         except urllib.error.HTTPError as e:
@@ -68,18 +69,6 @@ class RunApi(ApiTestData):
         except Exception as e:
             return "Error: %s" % e
         return json.loads(res.read().decode("utf-8"))
-        # try:
-        #     module = importlib.import_module("rpc_modules.%s" % func_name)
-        # except ModuleNotFoundError:
-        #     func_name = "general"
-        #     module = importlib.import_module("rpc_modules.general")
-        # try:
-        #     res = urllib.request.urlopen(req, timeout=10)
-        # except urllib.error.HTTPError as e:
-        #     return getattr(module, func_name)(e.fp.read().decode("utf-8"))  # 返回接口错误抛出的内容
-        # except Exception as e:
-        #     return "ERROR: %s" % e
-        # return getattr(module, func_name)(res.read().decode("utf-8"))
 
     @staticmethod
     def echo_monit_result(result, field=None):
