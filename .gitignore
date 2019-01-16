@@ -2,9 +2,7 @@
 id_rsa_test
 t.py
 id_rsa*
-conf/config.ini
-conf/id_rsa_jump
-conf/multi_node.ini
+conf/*
 daily_test
 do_test.py
 __pycache__

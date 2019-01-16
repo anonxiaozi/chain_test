@@ -56,10 +56,6 @@ def get_args():
     list_func.add_argument("listobj", type=str, choices=["api", "config"])
     list_func.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
 
-    # # deposit
-    # deposit = subarg.add_parser("deposit", help="deposit")
-    # deposit.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
-
     return arg
 
 

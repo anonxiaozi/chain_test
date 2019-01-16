@@ -24,57 +24,76 @@ class DepositScale(RPCTest):
     def get_block_depositid(self):
         deposit = GetDepositID(self.args["host"])
         self.deposit_id_map = deposit.run()
-        print(self.deposit_id_map)
+        self.deposit_id_count_map = dict.fromkeys(self.deposit_id_map.values(), 0)
 
     def change_height_body(self, height):
         for key in range(height + 1):
             body = {
-                "key": str(key)
+                "Key": str(key)
             }
             yield key, body
 
     def get_block_info(self):
+        """
+        首先根据get_current_height来获取当前块高度，然后循环每个块信息
+        """
+        sign = 1
         height = self.get_current_height()
         method = "GetBlockInfoByHeight"
         func = self.get_test_obj(method, None)
         bodys = self.change_height_body(height)
         for key, body in bodys:
+            if sign > 10:
+                sys.exit(1)  # 出现10次获取块信息错误，停止获取块信息
             body = json.dumps(body).encode("utf-8")
             result = func.cli_api(body)
-            if not self.check_result(result, "get_block_info"):
-                self.check_result(result, "get_block_info")
+            if not self.check_result(result):
+                print("Retry...".center(50, "*"))
+                self.check_result(result)
             try:
-                deposit_name = result["DepositID"]["Value"]
+                deposit_id = result["DepositID"]["Value"]
+                if deposit_id in self.deposit_id_count_map:
+                    self.deposit_id_count_map[deposit_id] += 1
+                else:
+                    self.deposit_id_count_map[deposit_id] = 1
                 print(str(key).center(10), end=' -->    ')
-                print("[%s]" % deposit_name)
+                print("[%s]" % deposit_id)
             except Exception:
                 print(result)
+                sign += 1
+        else:
+            print(("Block Height [ %s ]" % height).center(100, "="))
+            reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
+            relate_name_count = {reverse_deposit_id_map[x]: self.deposit_id_count_map[x] for x in self.deposit_id_count_map}
+            for key, value in relate_name_count.items():
+                print(key, ": ", value)
 
     def get_current_height(self):
         method = "GetNodeStatus"
         func = self.get_test_obj(method, None)
         result = func.cli_api()
-        if not self.check_result(result, "get_current_height"):
-            self.check_result(result, "get_current_height")
+        if not self.check_result(result):
+            print("Retry...".center(50, "*"))
+            self.check_result(result)
         try:
             height = int(result["Height"])
-            print("Block Height [ %s ]" % height)
+            print(("Block Height [ %s ]" % height).center(100, "="))
             return height
         except Exception:
             print(result)
             sys.exit(1)
 
-    def check_result(self, result, func_name):
+    def check_result(self, result):
         if "message" in result:
             if "cannot be send tx to node currently" in result["message"]:
                 print(result)
-                print("Retry...".center(50, "*"))
             else:
                 return result
         else:
             return result
 
     def run(self):
+        self.get_block_depositid()
         self.get_block_info()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -83,11 +102,11 @@ class DepositScale(RPCTest):
 
 class GetDepositID(MySSH):
     id_map = {
-        "root": None,
-        "3006": None,
-        "3007": None,
-        "3008": None,
-        "3009": None
+        "root": "root",
+        "3006": "3006",
+        "3007": "3007",
+        # "3008": "3008",
+        # "3009": "3009"
     }
 
     def __init__(self, hostname):
