@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 # @Time: 2019/1/15
-# @File: deposit_scale
+# @File: DepositScale
+
+"""
+获取当前块高度，计算每个质押账户的出块数，接口包括：GetBlockInfoByHeight、GetNodeStatus
+"""
 
 import sys
 import os
-
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from client.base import RPCTest
-from tools.remote_exec import MySSH
-import re
+from client.GetDepositID import GetDepositID
 import json
 
 
@@ -18,15 +20,20 @@ class DepositScale(RPCTest):
 
     def __init__(self):
         super().__init__()
-        self.arg.add_argument("-d", "--host", help="远程主机名或地址，用来获取DepositID")
-        self.args = vars(self.get_args().parse_args())
+        self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
 
-    def get_block_depositid(self):
-        deposit = GetDepositID(self.args["host"])
-        self.deposit_id_map = deposit.run()
-        self.deposit_id_count_map = dict.fromkeys(self.deposit_id_map.values(), 0)
+    def get_block_depositid(self, dict_data):
+        """
+        获取块信息中的质押ID
+        :param dict_data: 命令行参数信息
+        """
+        deposit = GetDepositID()
+        deposit.args["accounts"] = dict_data["accounts"]
+        self.deposit_id_map = deposit.status(dict_data)
+        self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
 
-    def change_height_body(self, height):
+    @staticmethod
+    def change_height_body(height):
         for key in range(height + 1):
             body = {
                 "Key": str(key)
@@ -65,14 +72,16 @@ class DepositScale(RPCTest):
             print(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
             relate_name_count = {reverse_deposit_id_map[x]: self.deposit_id_count_map[x] for x in self.deposit_id_count_map}
-            for key, value in relate_name_count.items():
-                print(key, ": ", value)
+            return relate_name_count
 
     def get_current_height(self):
+        """
+        使用"GetNodeStatus"接口获取当前块高度
+        """
         method = "GetNodeStatus"
         func = self.get_test_obj(method, None)
         result = func.cli_api()
-        if not self.check_result(result):
+        if not self.check_result(result):  # 获取失败后，尝试重试一次
             print("Retry...".center(50, "*"))
             self.check_result(result)
         try:
@@ -83,7 +92,11 @@ class DepositScale(RPCTest):
             print(result)
             sys.exit(1)
 
-    def check_result(self, result):
+    @staticmethod
+    def check_result(result):
+        """
+        检查接口返回的信息是否正确
+        """
         if "message" in result:
             if "cannot be send tx to node currently" in result["message"]:
                 print(result)
@@ -92,44 +105,27 @@ class DepositScale(RPCTest):
         else:
             return result
 
-    def run(self):
-        self.get_block_depositid()
-        self.get_block_info()
+    def status(self, dict_data):
+        """
+        启动测试
+        :param dict_data: self.args
+        :return 返回质押账号和出块数，字典格式
+        """
+        self.get_block_depositid(dict_data)
+        map_account_count = self.get_block_info()
+        return map_account_count
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
 
-class GetDepositID(MySSH):
-    id_map = {
-        "root": "root",
-        "3006": "3006",
-        "3007": "3007",
-        # "3008": "3008",
-        # "3009": "3009"
-    }
-
-    def __init__(self, hostname):
-        self.id_re = re.compile(r"client_pb:\s(\d{19})\s?")
-        super().__init__(hostname, username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
-
-    def get_deposit_id(self, deposit_name="root"):
-        result = self.remote_exec("cd /root/work; ./cli convert -from %s -method str2depositid" % deposit_name)
-        deposit_id = self.id_re.findall(result)
-        if deposit_id:
-            self.id_map[deposit_name] = deposit_id[0]
-
-    def run(self):
-        for name in self.id_map:
-            self.get_deposit_id(name)
-        return self.id_map
-
-
 if __name__ == "__main__":
     deposit_scale = DepositScale()
+    deposit_scale.args = vars(deposit_scale.arg.parse_args())
     try:
-        deposit_scale.run()
-    # deposit_scale.get_block_depositid()
+        map_account_count = deposit_scale.status(deposit_scale.args)
+        for key, value in map_account_count.items():
+            print(key, value, sep=" --> ")
     except KeyboardInterrupt as e:
         print("Exit.")
         sys.exit(1)

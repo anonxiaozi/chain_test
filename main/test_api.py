@@ -59,6 +59,9 @@ class RunApi(ApiTestData):
         url, data, headers = self.action(self.method, self.sign)
         if body:
             data = body
+        if data:
+            if not isinstance(data, bytes):
+                data = json.dumps(data).encode("utf-8")
         if not url:
             return "ERROR: method not found: %s" % self.method
         req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)

@@ -2,6 +2,10 @@
 # @Time: 2018/12/29
 # @File: base.py
 
+"""
+RPC接口测试的基类
+"""
+
 import argparse
 import sys
 import os
@@ -18,14 +22,17 @@ class RPCTest(object):
     """
 
     def __init__(self):
-        self.start_method = ""
-        self.start_sign = ""
-        self.stop_method = ""
-        self.stop_sign = ""
-        self.status_method = ""
-        self.status_sign = ""
+        """
+        如果测试会自动结束，则除了重写status方法外，也要重写run方法
+        """
+        self.start_method = ""  # 执行测试的接口名
+        self.start_sign = ""  # 如果同一接口包含多种body体，需要指定
+        self.stop_method = ""  # 停止测试的接口名
+        self.stop_sign = ""  # 同 self.start_sign
+        self.status_method = ""  # 获取状态的接口名
+        self.status_sign = ""  # 同 self.start_sign
         self.arg = self.get_args()
-        self.args = None
+        self.args = {}
 
     @staticmethod
     def get_args():
@@ -73,7 +80,7 @@ class RPCTest(object):
         return start_result
         # self.check(self.start_method, start_result)
 
-    def status(self):
+    def status(self, *args):
         """
         每个继承的RPC测试，都需要重写status方法
         """
@@ -91,11 +98,11 @@ class RPCTest(object):
         stop_result = func.cli_api()
         self.check(self.stop_method, stop_result)
 
-    def run(self):
+    def run(self, *args):
         # self.check_service()  # 用来检测配置文件中指定的服务是否启动，如果没有启动，则会尝试初始化环境
         self.stop()
         self.start()
-        self.status()
+        self.status(*args)
         self.stop()
 
     def __exit__(self, exc_type, exc_val, exc_tb):

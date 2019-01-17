@@ -20,6 +20,9 @@ def get_args():
 
     subarg = arg.add_subparsers(help="Subcommand", dest="sub")
 
+    # shard_args = argparse.ArgumentParser(add_help=False)
+    # shard_args.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
+
     # run cmd
     cmd = subarg.add_parser("cmd", help="Remote execution of commands")
     cmd.add_argument("host", type=str, help="Node name")

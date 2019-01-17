@@ -171,17 +171,15 @@ class Deposit(object):
             sys.exit(1)
 
     def deposit(self, amount=10000):
-        # current_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        # deposit_id = "%s_%s" % (self.node_info["id"], current_time)
-        deposit_id = self.node_info["id"]
+        deposit_name = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
-        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s" % (amount, self.node_info["id"], deposit_id, self.node_info["id"], source_addr)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
-        print("Deposit result [%s]:")
+        print("Deposit result [%s]:" % deposit_name)
         for item in result.split("\n"):
             print(item)
-        return deposit_id
+        return deposit_name
 
 
 class DeployCli(MySSH):

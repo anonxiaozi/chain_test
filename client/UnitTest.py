@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 # @Time: 2018/12/29
-# @File: unit_test.py
+# @File: UnitTest.py
+
+"""
+测试StartTxTest接口
+"""
 
 import sys
 import os
@@ -23,7 +27,6 @@ class UnitTest(RPCTest):
         self.status_sign = None
         self.stop_method = "StopTxTest"
         self.stop_sign = None
-        self.args = vars(self.arg.parse_args())
 
     @staticmethod
     def cost():
@@ -43,12 +46,11 @@ class UnitTest(RPCTest):
             if not isinstance(status_result, dict):
                 print(status_result)
                 return status_result
+            elif "teststatus" in status_result["TestResults"]:
+                RunApi.echo_monit_result(status_result)
+                break
             else:
-                if "teststatus" in status_result["TestResults"]:
-                    RunApi.echo_monit_result(status_result)
-                    break
-                else:
-                    continue
+                continue
 
     def start_cost(self):
         cost = threading.Thread(target=self.cost)
@@ -58,6 +60,7 @@ class UnitTest(RPCTest):
 
 if __name__ == "__main__":
     unittest = UnitTest()
+    unittest.args = vars(unittest.arg.parse_args())
     try:
         unittest.run()
     except KeyboardInterrupt:

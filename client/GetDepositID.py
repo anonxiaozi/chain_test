@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+# @Time: 2019/1/17
+# @File: GetDepositID
+
+"""
+通过质押账号获取对应的质押ID
+"""
+
+import sys
+import os
+
+BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIGDIR = os.path.join(BASEDIR, "conf")
+sys.path.insert(0, BASEDIR)
+from tools.remote_exec import MySSH
+import re
+import argparse
+
+
+class GetDepositID(object):
+
+    def __init__(self):
+        self.id_re = re.compile(r"client_pb:\s(\d{19})\s?")
+        self.arg = argparse.ArgumentParser(prog="Get Deposit ID")
+        self.arg.add_argument("host", type=str, help="服务器地址")
+        self.arg.add_argument("port", type=int, help="服务器端口")
+        self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
+        self.args = {}
+
+    def status(self, dict_data):
+        ssh = MySSH(dict_data["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
+        accounts = dict_data["accounts"].split(",")
+        if not accounts:
+            return
+        id_map = {x: None for x in accounts}
+        for account in accounts:
+            result = ssh.remote_exec("cd /root/work; ./cli convert -from %s -method str2depositid" % account)
+            deposit_id = self.id_re.findall(result)
+            if deposit_id:
+                id_map[account] = deposit_id[0]
+        return id_map
+
+
+if __name__ == "__main__":
+    do = GetDepositID()
+    args = vars(do.arg.parse_args())
+    id_map = do.status(args)
+    for key, value in id_map.items():
+        print(key, value, sep=" -> ")
