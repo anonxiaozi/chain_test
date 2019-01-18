@@ -27,10 +27,9 @@ class GetDepositID(object):
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
         self.args = {}
 
-    def status(self, dict_data):
-        dict_data = dict_data["args"]
-        ssh = MySSH(dict_data["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
-        accounts = dict_data["accounts"].split(",")
+    def status(self):
+        ssh = MySSH(self.args["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
+        accounts = self.args["accounts"].split(",")
         if not accounts:
             return
         id_map = {x: None for x in accounts}
@@ -41,12 +40,12 @@ class GetDepositID(object):
                 id_map[account] = deposit_id[0]
         return id_map
 
-    def run(self, **kwargs):
-        return self.status(kwargs)
+    def run(self):
+        return self.status()
 
 
 if __name__ == "__main__":
     do = GetDepositID()
-    args = vars(do.arg.parse_args())
-    id_map = do.run(args=args)
+    do.args = vars(do.arg.parse_args())
+    id_map = do.run()
     print(id_map)

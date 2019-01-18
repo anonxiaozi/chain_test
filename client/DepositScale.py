@@ -24,15 +24,14 @@ class DepositScale(RPCTest):
         super().__init__()
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
 
-    def get_block_depositid(self, dict_data):
+    def get_block_depositid(self):
         """
         获取块信息中的质押ID
         :param dict_data: 命令行参数信息
         """
         deposit = GetDepositID()
-        dict_data = dict_data["args"]
-        deposit.args["accounts"] = dict_data["accounts"]
-        self.deposit_id_map = deposit.status(dict_data)
+        deposit.args = self.args
+        self.deposit_id_map = deposit.status()
         self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
 
     @staticmethod
@@ -75,6 +74,8 @@ class DepositScale(RPCTest):
             print(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
             relate_name_count = {reverse_deposit_id_map[x]: self.deposit_id_count_map[x] for x in self.deposit_id_count_map}
+            for key, value in relate_name_count.items():
+                print(key, value, sep=" -> ")
             return relate_name_count
 
     def get_current_height(self):
@@ -108,8 +109,8 @@ class DepositScale(RPCTest):
         else:
             return result
 
-    def run(self, **kwargs):
-        self.get_block_depositid(kwargs)
+    def run(self):
+        self.get_block_depositid()
         return self.get_block_info()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -120,7 +121,7 @@ if __name__ == "__main__":
     deposit_scale = DepositScale()
     deposit_scale.args = vars(deposit_scale.arg.parse_args())
     try:
-        map_account_count = deposit_scale.run(args=deposit_scale.args)
+        map_account_count = deposit_scale.run()
         print(map_account_count)
     except KeyboardInterrupt as e:
         print("Exit.")

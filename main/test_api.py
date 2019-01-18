@@ -91,7 +91,6 @@ class RunApi(ApiTestData):
         else:
             print("\n")
             print(json.dumps(result, indent=2))
-            return json.dumps(result, indent=2)
 
     def monit_result(self, time_internal, total=0):
         if not total:

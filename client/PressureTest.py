@@ -31,28 +31,27 @@ class PressureTest(RPCTest):
         self.arg.add_argument("-i", "--interval", type=int, help="多长时间打印一次状态，默认: %(default)s s", default=2)
         self.arg.add_argument("-s", "--fetch", type=str, help="需要打印的字段，多个字段用逗号分隔，默认: %(default)s，表示所有", default=None)
 
-    def status(self, dict_data):
-        dict_data = dict_data["args"]
+    def status(self):
         basic = 0
         count = 0
         func = self.get_test_obj(self.status_method, self.status_sign)
-        while basic < dict_data["totaltime"]:
-            time.sleep(dict_data["interval"])
+        while basic < self.args["totaltime"]:
+            time.sleep(self.args["interval"])
             status_result = func.cli_api()
             print(str(count).center(50, "*"))
-            RunApi.echo_monit_result(status_result, dict_data["fetch"])
-            basic += dict_data["interval"]
+            RunApi.echo_monit_result(status_result, self.args["fetch"])
+            basic += self.args["interval"]
             count += 1
 
-    def run(self, **kwargs):
-        self.status(kwargs)
+    def run(self):
+        self.status()
 
 
 if __name__ == "__main__":
     pressure = PressureTest()
     pressure.args = vars(pressure.arg.parse_args())
     try:
-        pressure.run(args=pressure.args)
+        pressure.run()
     except KeyboardInterrupt:
         print("Exit.")
     except Exception as e:

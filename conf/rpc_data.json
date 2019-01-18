@@ -38,9 +38,7 @@
     "GetDepositAccount": {
         "uri": "api/v1/GetDepositAccount",
         "body": {
-            "DepositID": {
-                "Value": "6051053228330400958"
-            }
+            "ID": "root"
         }
     },
     "FindDepositBySource": {

@@ -48,8 +48,8 @@ class UnitTest(RPCTest):
                 print(status_result)
                 return status_result
             elif "teststatus" in status_result["TestResults"]:
-                test_result = RunApi.echo_monit_result(status_result)
-                return test_result
+                RunApi.echo_monit_result(status_result)
+                return status_result
             else:
                 continue
 

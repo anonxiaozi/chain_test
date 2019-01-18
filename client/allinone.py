@@ -7,17 +7,21 @@ all in one
 """
 
 import importlib
+import json
+import datetime
 
 
 def run_module(module_dict, package_path="client"):
     result_dict = {}
-    args = module_dict["gloabl"].copy()
-    for module in module_dict:
-        args.update(module_dict[module])
-        print(module_dict[module]["desc"].center(100, "*"))
+    args = module_dict["global"].copy()
+    modules = module_dict["modules"]
+    for module in modules:
+        args.update(modules[module])
+        print("%s..." % modules[module]["desc"])
         spec = importlib.import_module(module, package_path)
         func = getattr(spec, module)()
-        result = func.run(args=args)
+        func.args = args
+        result = func.run()
         result_dict[module] = result
     return result_dict
 
@@ -28,22 +32,26 @@ if __name__ == "__main__":
             "host": "10.15.101.67",
             "port": 60002
         },
-        "GetDepositID": {
-            "accounts": "root,3006,3007",
-            "desc": "Get Deposit ID"
-        },
-        "GetDepositAccount": {
-            "accounts": "root,3006,3007",
-            "desc": "Get Deposit Info"
-        },
-        # "DepositScale": {
-        #     "accounts": "root,3006,3007",
-        #     "desc": "Get Deposit Count"
-        # },
-        # "UnitTest": {
-        #     "desc": "Unit Test"
-        # }
+        "modules": {
+            "GetDepositID": {
+                "accounts": "root,3006,3007",
+                "desc": "Get Deposit ID"
+            },
+            "GetDepositAccount": {
+                "accounts": "root,3006,3007",
+                "desc": "Get Deposit Info"
+            },
+            "DepositScale": {
+                "accounts": "root,3006,3007",
+                "desc": "Get Deposit Count"
+            },
+            "UnitTest": {
+                "desc": "Unit Test"
+            }
+        }
     }
     result = run_module(module_dict)
     for key, value in result.items():
         print(key, value, sep=" -> ")
+    with open("../exports/%s.json" % datetime.datetime.now().strftime("%Y%m%d_%H%M%S"), 'w') as f:
+        json.dump(result, f, indent=4)

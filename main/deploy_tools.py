@@ -59,7 +59,7 @@ class DeployNode(MySSH):
         """
         清除noded数据
         """
-        clean_cmd = "cd /root/work; ./noded clear -id %s; rm -f logs/*" % self.node_info["id"]
+        clean_cmd = "cd /root/work; ./noded clear -nick %s; rm -f logs/*" % self.node_info["id"]
         self.remote_exec(clean_cmd)
         if self.node_info.getboolean("del_wallet"):
             del_wallet_cmd = "cd /root/work; rm -f wallet_%s.dat" % self.node_info["id"]
@@ -140,7 +140,7 @@ class Deposit(object):
         if not account:
             account = "root"
         ssh = self.get_ssh_obj(node_info)
-        get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -id %s -name %s -password 123456 | grep ': 0x' | awk '{print $NF}'" % (self.node_info["id"], account)
+        get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -nick %s -name %s -password 123456 | grep ': 0x' | awk '{print $NF}'" % (self.node_info["id"], account)
         result = ssh.remote_exec(get_pubkey_cmd)
         if result:
             return result
@@ -149,7 +149,7 @@ class Deposit(object):
             sys.exit(1)
 
     def get_addr(self, account, node_info):
-        get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname %s -id %s | awk -F'address : ' '{print $NF}'" % (account, node_info["id"])
+        get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname %s -nick %s | awk -F'address : ' '{print $NF}'" % (account, node_info["id"])
         ssh = self.get_ssh_obj(node_info)
         result = ssh.remote_exec(get_addr_cmd)
         if result.startswith("0x"):
@@ -163,7 +163,7 @@ class Deposit(object):
             account = self.node_info["id"]
         root_addr = self.get_addr("root", self.genesis_info)  # root address
         to_addr = self.get_addr(account, self.node_info)  # deposit account address
-        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -id %s -password 123456 -toaddr %s ; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -nick %s -password 123456 -toaddr %s ; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
@@ -173,7 +173,7 @@ class Deposit(object):
     def deposit(self, amount=10000):
         deposit_name = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
-        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -id %s -source %s" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -nick %s -source %s" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
         print("Deposit result [%s]:" % deposit_name)
@@ -188,7 +188,7 @@ class DeployCli(MySSH):
         start：启动cli
         stop： 停止cli
     """
-    match_id = re.compile(r'-id\s+?(\d+?)\s')
+    match_id = re.compile(r'-nick\s+?(\d+?)\s')
     get_faild_info = "cd /root/work; grep -i -E 'panic|warn' cli_%s.log"
 
     def __init__(self, cli_info):
@@ -304,8 +304,8 @@ class Config(object):
             "del_wallet": False,
             "create_wallet": 0,
             "deposit": False,
-            "init_cmd": "cd /root/work; ./noded init -account root -role miner -id 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
-            "start_cmd": "cd /root/work; nohup ./noded run -account root -id 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 \
+            "init_cmd": "cd /root/work; ./noded init -account root -role miner -nick 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
+            "start_cmd": "cd /root/work; nohup ./noded run -account root -nick 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 \
                              -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 &> /dev/null &"
         }
         for i in range(1, 3):
