@@ -6,30 +6,44 @@
 all in one
 """
 
-import sys
-import os
-
-BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIGDIR = os.path.join(BASEDIR, "conf")
-sys.path.insert(0, BASEDIR)
 import importlib
 
 
-def import_module(module_name, module_args, sub_module_name, package_path="client"):
-    spec = importlib.import_module(module_name, package_path)
-    func = getattr(spec, sub_module_name)()
-    result = func.status(module_args)
-    return result
+def run_module(module_dict, package_path="client"):
+    result_dict = {}
+    args = module_dict["gloabl"].copy()
+    for module in module_dict:
+        args.update(module_dict[module])
+        print(module_dict[module]["desc"].center(100, "*"))
+        spec = importlib.import_module(module, package_path)
+        func = getattr(spec, module)()
+        result = func.run(args=args)
+        result_dict[module] = result
+    return result_dict
 
 
 if __name__ == "__main__":
     module_dict = {
-        'GetDepositID': {
+        "global": {
             "host": "10.15.101.67",
-            "port": 60002,
-            "accounts": "root,3005,3006",
-        }
+            "port": 60002
+        },
+        "GetDepositID": {
+            "accounts": "root,3006,3007",
+            "desc": "Get Deposit ID"
+        },
+        "GetDepositAccount": {
+            "accounts": "root,3006,3007",
+            "desc": "Get Deposit Info"
+        },
+        # "DepositScale": {
+        #     "accounts": "root,3006,3007",
+        #     "desc": "Get Deposit Count"
+        # },
+        # "UnitTest": {
+        #     "desc": "Unit Test"
+        # }
     }
-    name = "GetDepositID"
-    get_deposit_id = import_module(name, module_dict[name], name)
-    print(get_deposit_id)
+    result = run_module(module_dict)
+    for key, value in result.items():
+        print(key, value, sep=" -> ")

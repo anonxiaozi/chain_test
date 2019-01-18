@@ -3,12 +3,13 @@
 # @File: PressureTest.py
 
 """
-测试StartTxTest接口
+测试StartTxTest接口，压力测试，在间隔时间内打印节点信息
 """
 
 import sys
 import os
 import time
+
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
@@ -31,7 +32,7 @@ class PressureTest(RPCTest):
         self.arg.add_argument("-s", "--fetch", type=str, help="需要打印的字段，多个字段用逗号分隔，默认: %(default)s，表示所有", default=None)
 
     def status(self, dict_data):
-        print(dict_data)
+        dict_data = dict_data["args"]
         basic = 0
         count = 0
         func = self.get_test_obj(self.status_method, self.status_sign)
@@ -43,15 +44,18 @@ class PressureTest(RPCTest):
             basic += dict_data["interval"]
             count += 1
 
+    def run(self, **kwargs):
+        self.status(kwargs)
+
 
 if __name__ == "__main__":
     pressure = PressureTest()
     pressure.args = vars(pressure.arg.parse_args())
     try:
-        pressure.run(pressure.args)
+        pressure.run(args=pressure.args)
     except KeyboardInterrupt:
         print("Exit.")
-    # except Exception as e:
-    #     print("ERROR: {}".format(e))
+    except Exception as e:
+        print("ERROR: {}".format(e))
     finally:
         pressure.stop()

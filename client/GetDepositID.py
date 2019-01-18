@@ -3,12 +3,12 @@
 # @File: GetDepositID
 
 """
-通过质押账号获取对应的质押ID
+通过质押账号获取对应的质押ID，输出结果为：
+{'root': '6051053228330400958', '3005': '1423632669172846374', '3006': '9384355224946534474'}
 """
 
 import sys
 import os
-
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
@@ -28,6 +28,7 @@ class GetDepositID(object):
         self.args = {}
 
     def status(self, dict_data):
+        dict_data = dict_data["args"]
         ssh = MySSH(dict_data["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
         accounts = dict_data["accounts"].split(",")
         if not accounts:
@@ -40,10 +41,12 @@ class GetDepositID(object):
                 id_map[account] = deposit_id[0]
         return id_map
 
+    def run(self, **kwargs):
+        return self.status(kwargs)
+
 
 if __name__ == "__main__":
     do = GetDepositID()
     args = vars(do.arg.parse_args())
-    id_map = do.status(args)
-    for key, value in id_map.items():
-        print(key, value, sep=" -> ")
+    id_map = do.run(args=args)
+    print(id_map)

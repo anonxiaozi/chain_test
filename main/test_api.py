@@ -81,11 +81,17 @@ class RunApi(ApiTestData):
         if not result:
             print(None)
         elif field:
+            result_dict = {}
             for key in field.split(","):
                 key = key.strip()
+                result_dict[key] = result.get(key, "")
                 print(key, result.get(key, ""), sep=": ", end="\n")
+            else:
+                return result_dict
         else:
+            print("\n")
             print(json.dumps(result, indent=2))
+            return json.dumps(result, indent=2)
 
     def monit_result(self, time_internal, total=0):
         if not total:

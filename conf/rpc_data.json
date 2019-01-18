@@ -15,8 +15,8 @@
             "pressure_test": {
                 "TestType": "token_transfer",
                 "TestProperties": {
-                    "TxCount": "20",
-                    "AccCount": "30",
+                    "TxCount": "2",
+                    "AccCount": "3",
                     "SendSpan": "100"
                 }
             }
@@ -41,6 +41,12 @@
             "DepositID": {
                 "Value": "6051053228330400958"
             }
+        }
+    },
+    "FindDepositBySource": {
+        "uri": "api/v1/FindDepositBySource",
+        "body": {
+            "ID": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914"
         }
     }
 }

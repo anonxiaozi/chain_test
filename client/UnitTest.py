@@ -9,6 +9,7 @@
 import sys
 import os
 import time
+
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
@@ -47,8 +48,8 @@ class UnitTest(RPCTest):
                 print(status_result)
                 return status_result
             elif "teststatus" in status_result["TestResults"]:
-                RunApi.echo_monit_result(status_result)
-                break
+                test_result = RunApi.echo_monit_result(status_result)
+                return test_result
             else:
                 continue
 
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     unittest = UnitTest()
     unittest.args = vars(unittest.arg.parse_args())
     try:
-        unittest.run()
+        test_result = unittest.run()
     except KeyboardInterrupt:
         print("Exit.")
     except Exception as e:

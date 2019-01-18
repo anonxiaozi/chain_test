@@ -80,7 +80,7 @@ class RPCTest(object):
         return start_result
         # self.check(self.start_method, start_result)
 
-    def status(self, *args):
+    def status(self, **kwargs):
         """
         每个继承的RPC测试，都需要重写status方法
         """
@@ -98,12 +98,11 @@ class RPCTest(object):
         stop_result = func.cli_api()
         self.check(self.stop_method, stop_result)
 
-    def run(self, *args):
+    def run(self, **kwargs):
         # self.check_service()  # 用来检测配置文件中指定的服务是否启动，如果没有启动，则会尝试初始化环境
         self.stop()
         self.start()
-        self.status(*args)
-        self.stop()
+        return self.status(**kwargs)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()

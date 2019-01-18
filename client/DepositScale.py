@@ -3,11 +3,13 @@
 # @File: DepositScale
 
 """
-获取当前块高度，计算每个质押账户的出块数，接口包括：GetBlockInfoByHeight、GetNodeStatus
+获取当前块高度，计算每个质押账户的出块数，接口包括：GetBlockInfoByHeight、GetNodeStatus，返回结果：
+{'root': 2815, '3006': 2966, '3007': 2663}
 """
 
 import sys
 import os
+
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
@@ -28,6 +30,7 @@ class DepositScale(RPCTest):
         :param dict_data: 命令行参数信息
         """
         deposit = GetDepositID()
+        dict_data = dict_data["args"]
         deposit.args["accounts"] = dict_data["accounts"]
         self.deposit_id_map = deposit.status(dict_data)
         self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
@@ -105,15 +108,9 @@ class DepositScale(RPCTest):
         else:
             return result
 
-    def status(self, dict_data):
-        """
-        启动测试
-        :param dict_data: self.args
-        :return 返回质押账号和出块数，字典格式
-        """
-        self.get_block_depositid(dict_data)
-        map_account_count = self.get_block_info()
-        return map_account_count
+    def run(self, **kwargs):
+        self.get_block_depositid(kwargs)
+        return self.get_block_info()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
@@ -123,9 +120,8 @@ if __name__ == "__main__":
     deposit_scale = DepositScale()
     deposit_scale.args = vars(deposit_scale.arg.parse_args())
     try:
-        map_account_count = deposit_scale.status(deposit_scale.args)
-        for key, value in map_account_count.items():
-            print(key, value, sep=" --> ")
+        map_account_count = deposit_scale.run(args=deposit_scale.args)
+        print(map_account_count)
     except KeyboardInterrupt as e:
         print("Exit.")
         sys.exit(1)
