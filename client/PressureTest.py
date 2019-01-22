@@ -23,7 +23,7 @@ class PressureTest(RPCTest):
         super().__init__()
         self.start_method = "StartTxTest"
         self.start_sign = "pressure_test"
-        self.status_method = "GetNodeStatus"
+        self.status_method = "GetTxTestStatus"
         self.status_sign = None
         self.stop_method = "StopTxTest"
         self.stop_sign = None
@@ -42,9 +42,6 @@ class PressureTest(RPCTest):
             RunApi.echo_monit_result(status_result, self.args["fetch"])
             basic += self.args["interval"]
             count += 1
-
-    def run(self):
-        self.status()
 
 
 if __name__ == "__main__":

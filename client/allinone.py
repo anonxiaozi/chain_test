@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 "accounts": "root,3006,3007",
                 "desc": "Get Deposit Info"
             },
-            "DepositScale": {
+            "GetDepositScale": {
                 "accounts": "root,3006,3007",
                 "desc": "Get Deposit Count"
             },

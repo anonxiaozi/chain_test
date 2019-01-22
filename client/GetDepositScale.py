@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # @Time: 2019/1/15
-# @File: DepositScale
+# @File: GetDepositScale
 
 """
 获取当前块高度，计算每个质押账户的出块数，接口包括：GetBlockInfoByHeight、GetNodeStatus，返回结果：
@@ -18,7 +18,7 @@ from client.GetDepositID import GetDepositID
 import json
 
 
-class DepositScale(RPCTest):
+class GetDepositScale(RPCTest):
 
     def __init__(self):
         super().__init__()
@@ -118,7 +118,7 @@ class DepositScale(RPCTest):
 
 
 if __name__ == "__main__":
-    deposit_scale = DepositScale()
+    deposit_scale = GetDepositScale()
     deposit_scale.args = vars(deposit_scale.arg.parse_args())
     try:
         map_account_count = deposit_scale.run()

@@ -15,7 +15,7 @@
             "pressure_test": {
                 "TestType": "token_transfer",
                 "TestProperties": {
-                    "TxCount": "2",
+                    "TxCount": "100",
                     "AccCount": "3",
                     "SendSpan": "100"
                 }
@@ -45,6 +45,45 @@
         "uri": "api/v1/FindDepositBySource",
         "body": {
             "ID": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914"
+        }
+    },
+    "GetAccountByName": {
+        "uri": "api/v1/GetAccountByName",
+        "body": {
+            "ID": "root"
+        }
+    },
+    "GetAccountByAddr": {
+        "uri": "api/v1/GetAccountByAddr",
+        "body": {
+            "ID": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914"
+        }
+    },
+    "CreateAccount": {
+        "uri": "api/v1/CreateAccount",
+        "body": {
+            "CreatorAddr": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914",
+            "Name": "",
+            "Addr": ""
+        }
+    },
+    "GetDepositInfo": {
+        "uri": "api/v1/GetDepositInfo"
+    },
+    "UnlockWallet": {
+        "uri": "api/v1/UnlockWallet",
+        "body": {
+            "Addr": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914",
+            "Password": "123456",
+            "TimeSpan": "100"
+        }
+    },
+    "TransferToken": {
+        "uri": "api/v1/TransferToken",
+        "body": {
+            "FromAddr": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914",
+            "DestAddr": "0x11fd6f0a3b96ac630d9cb67c49bad2c41696b914",
+            "Amount": "10"
         }
     }
 }

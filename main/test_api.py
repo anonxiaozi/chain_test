@@ -39,8 +39,7 @@ class ApiTestData(object):
                 data = self.rpc_data[method].get("body", None)
         if data is None:
             return None
-        else:
-            return json.dumps(data).encode("utf-8")
+        return json.dumps(data).encode("utf-8")
 
     def action(self, method, sign):
         return self.get_url(method), self.get_data(method, sign), self.rpc_data["header"]
