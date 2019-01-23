@@ -36,13 +36,9 @@ class RPCTest(object):
 
     @staticmethod
     def get_args():
-        # default_config_file = os.path.join(CONFIGDIR, "config.ini")
         arg = argparse.ArgumentParser(prog="测试")
         arg.add_argument("host", type=str, help="服务器地址")
         arg.add_argument("port", type=int, help="服务器端口")
-        # arg.add_argument("-c", "--config", type=str,
-        #     help="config file name, the file directory is %s , Default: %s" % (
-        #     CONFIGDIR, default_config_file), default=default_config_file, required=True)
         return arg
 
     def deploy(self, action):
@@ -78,7 +74,6 @@ class RPCTest(object):
         func = self.get_test_obj(self.start_method, self.start_sign)
         start_result = func.cli_api()
         return start_result
-        # self.check(self.start_method, start_result)
 
     def status(self):
         """

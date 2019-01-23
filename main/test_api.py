@@ -29,14 +29,8 @@ class ApiTestData(object):
 
     def get_data(self, method, sign):
         data = self.rpc_data[method].get("body", None)
-        if data:
-            if len(data) > 1:  # 同一接口，多个body
-                if not sign:  # 没有指定body
-                    print("Missing parameters: sign")
-                    sys.exit()
-                data = self.rpc_data[method].get("body", None)[sign]
-            else:
-                data = self.rpc_data[method].get("body", None)
+        if sign:
+            data = self.rpc_data[method].get("body", None)[sign]  # 一个方法，有多个body体，需要通过sign参数来区分
         if data is None:
             return None
         return json.dumps(data).encode("utf-8")

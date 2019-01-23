@@ -5,7 +5,6 @@
 import mysql.connector
 from mysql.connector import errorcode
 import time
-import datetime
 import sys
 import re
 import os

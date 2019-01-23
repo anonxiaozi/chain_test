@@ -4,7 +4,7 @@
 
 """
 通过质押ID获取账户的质押信息，使用GetDepositAccount接口，返回结果：
-{'root': {'Deposit': True, 'Amount': '10000'}, '3005': {'Deposit': False, 'Amount': 0}}
+{'root': {'DepositID': {'Value': '6051053228330400958'}, 'Amount': '10000'}, '3006': {'DepositID': {'Value': '9384355224946534474'}, 'Amount': '10000'}}
 """
 
 import sys
@@ -22,9 +22,6 @@ class GetDepositAccount(RPCTest):
         super().__init__()
         self.start_method = "GetDepositAccount"
         self.start_sign = None
-        self.append_args()
-
-    def append_args(self):
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
 
     @staticmethod
@@ -36,16 +33,18 @@ class GetDepositAccount(RPCTest):
             yield value, body
 
     def status(self):
-        deposit_map = {}
+        deposit_map, sub_deposit_map = {}, {}
         func = self.get_test_obj(self.start_method, self.start_sign)
         data = self.change_body(self.args["accounts"].split(","))
         for value, body in data:
             result = func.cli_api(body)
             if "DepositID" in result:
                 deposit_map[value] = result
+                sub_deposit_map[value] = {"DepositID": result["DepositID"], "Amount": result["Amount"]}
             else:
                 deposit_map[value] = None
-        return deposit_map
+                sub_deposit_map[value] = None
+        return sub_deposit_map
 
     def run(self):
         return self.status()
