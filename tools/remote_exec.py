@@ -52,28 +52,10 @@ class MySSH(object):
             else:
                 cmd = check_result
         self.login_auth()
-        stdin, stdout, stderr = self.ssh.exec_command(cmd, timeout=60)
+        stdin, stdout, stderr = self.ssh.exec_command(cmd, timeout=30)
         error = stderr.read()
         if error:
             result = error
         else:
             result = stdout.read()
         return result.decode("utf-8").strip()
-
-
-class RunCmd(MySSH):
-
-    def __init__(self, cmd, host_info=None):
-        # super().__init__(host_info["address"], host_info["ssh_user"], host_info["ssh_key"], host_info.getint("ssh_port"))
-        super().__init__("10.15.101.254", "root", "..\\conf\\id_rsa_jump", 22)
-        self.cmd = cmd
-
-    def run_cmd(self):
-        result = self.remote_exec(self.cmd, check=True)
-        return result
-
-    def __del__(self):
-        try:
-            self.ssh.close()
-        except Exception:
-            print()

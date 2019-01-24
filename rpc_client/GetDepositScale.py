@@ -13,8 +13,8 @@ import os
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
-from client.base import RPCTest
-from client.GetDepositID import GetDepositID
+from rpc_client.base import RPCTest
+from rpc_client.GetDepositID import GetDepositID
 import json
 
 
@@ -74,8 +74,6 @@ class GetDepositScale(RPCTest):
             print(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
             relate_name_count = {reverse_deposit_id_map[x]: self.deposit_id_count_map[x] for x in self.deposit_id_count_map}
-            for key, value in relate_name_count.items():
-                print(key, value, sep=" -> ")
             return relate_name_count
 
     def get_current_height(self):

@@ -14,7 +14,7 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
-from client.base import RPCTest
+from rpc_client.base import RPCTest
 
 
 class PressureTest(RPCTest):
@@ -39,7 +39,7 @@ class PressureTest(RPCTest):
             time.sleep(self.args["interval"])
             status_result = func.cli_api()
             print(str(count).center(50, "*"))
-            RunApi.echo_monit_result(status_result, self.args["fetch"])
+            RunApi.echo_monit_result(result=status_result["TestResults"] if "TestResults" in status_result else status_result, field=self.args["fetch"])
             basic += self.args["interval"]
             count += 1
 

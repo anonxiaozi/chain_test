@@ -11,7 +11,7 @@ import json
 import datetime
 
 
-def run_module(module_dict, package_path="client"):
+def run_module(module_dict, package_path="rpc_client"):
     result_dict = {}
     args = module_dict["global"].copy()
     modules = module_dict["modules"]

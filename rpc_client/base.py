@@ -36,7 +36,7 @@ class RPCTest(object):
 
     @staticmethod
     def get_args():
-        arg = argparse.ArgumentParser(prog="测试")
+        arg = argparse.ArgumentParser(prog="RPC测试")
         arg.add_argument("host", type=str, help="服务器地址")
         arg.add_argument("port", type=int, help="服务器端口")
         return arg

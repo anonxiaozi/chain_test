@@ -15,7 +15,7 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
 import threading
-from client.base import RPCTest
+from rpc_client.base import RPCTest
 
 
 class UnitTest(RPCTest):

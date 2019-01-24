@@ -30,3 +30,34 @@
 后面，可以一个个写了，当然可能你还比较模糊，不清楚怎么写，这个就尽量找我
 
 同时，需要在confluence上建立一个列表去记录自己的执行方式与结果
+
+
+cli supported commands:
+  createwallet
+          Generates a new key-pair and saves it into the wallet file
+  listaccounts
+          Lists all accounts from the wallet file
+  convert
+          Provided conversion command line
+  createtesttable
+          Create table for test
+  createaccount
+          Generate a name of account with name, address and creator address
+  send
+          Transfer money to other accounts with the account in the wallet
+  deposit
+          Deposit goods need to be provided address, deposit id, amount
+  getaccount
+          Get account information, requrired input account name or account address
+  undeposit
+          Cancel Deposit goods need to be provided address,deposit id
+  issuetoken
+          Issue Token need : issuer address must be address of root
+  getwalletinfo
+          Get the existing key-pair from a wallet file and Show its address
+  sequencetest
+          Sequence Test
+  getwalletkey
+          a wallet, specifying the name (name), password determination, obtaining the public key
+  interact
+          process user input which may come from rpc and/or console
