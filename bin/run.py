@@ -24,10 +24,10 @@ def get_args():
     # shard_args.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
 
     # run cmd
-    cmd = subarg.add_parser("cmd", help="Remote execution of commands")
-    cmd.add_argument("host", type=str, help="Node name")
-    cmd.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
-    cmd.add_argument("-a", "--attach", type=str, help="The command to execute", required=True)
+    # cmd = subarg.add_parser("cmd", help="Remote execution of commands")
+    # cmd.add_argument("host", type=str, help="Node name")
+    # cmd.add_argument("-c", "--config", type=str, help="config file name, the file directory is %s , Default: %s" % (CONFIGDIR, default_config_file), default=default_config_file)
+    # cmd.add_argument("-a", "--attach", type=str, help="The command to execute", required=True)
 
     # deployment
     deploy = subarg.add_parser("deploy", help="Deployment environment")

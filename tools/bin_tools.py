@@ -4,7 +4,6 @@
 
 from main.deploy_tools import Config, check_file_exists, check_action_result, DeployNode, DeployCli, Deposit
 from main.test_api import RunApi, ApiTestData
-from tools.remote_exec import RunCmd
 import os
 import sys
 import json
@@ -65,15 +64,6 @@ class EveryOne(object):
             if err:
                 print("Error: %s" % err)
             return 1 if err else 0
-
-    def do_cmd(self):
-        """
-        单独执行cli或noded命令
-        """
-        remote_exec = RunCmd(self.args["attach"], self.args["host"])
-        exec_result = remote_exec.run_cmd()
-        print(exec_result)
-        return 0
 
     def do_deploy(self):
         """

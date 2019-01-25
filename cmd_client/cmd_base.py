@@ -21,7 +21,7 @@ class RunCmd(object):
     @staticmethod
     def get_args():
         arg = argparse.ArgumentParser(prog="CMD测试")
-        arg.add_argument("-d", "--host", type=str, help="服务器地址,默认为: %(default)s", default="10.15.101.67")
+        arg.add_argument("-d", "--host", type=str, help="服务器地址,默认为: %(default)s", default="10.15.101.77")
         arg.add_argument("-p", "--port", type=int, help="服务器端口,默认为: %(default)s", default=22)
         arg.add_argument("-u", "--user", help="SSH登陆用户名，默认为: %(default)s", default="root")
         arg.add_argument("-k", "--key", type=str, help="SSH密钥存放位置，默认为:%(default)s", default=os.path.join(CONFIGDIR, "id_rsa_jump"), required=False)
@@ -113,6 +113,36 @@ class RunCmd(object):
                       "-noderpcaddr {noderpcaddr} -noderpcport {noderpcport}".format(**self.args)
         return self.ssh.remote_exec(deposit_cmd, self.check)
 
+    def getaccount_args(self):
+        self.arg = self.get_args()
+        self.arg.add_argument("--addr", help="账户地址，不与 --name 同时使用")
+        self.arg.add_argument("--name", help="账户名称，不与 --addr 同时使用")
+        self.arg.add_argument("--nick", help="标识钱包id，默认为: %(default)s", default="pb")
+        self.arg.add_argument("--noderpcaddr", help="节点地址，默认为: %(default)s", default="127.0.0.1")
+        self.arg.add_argument("--noderpcport", type=int, help="节点端口，默认为: %(default)s", default=40001)
+
+    def getaccount(self):
+        if self.args["addr"]:
+            getaccount_cmd = "cli getaccount -addr {addr} -nick {nick} -noderpcaddr {noderpcaddr} -noderpcport {noderpcport} | " \
+                             "grep '&AccountBriefInfo' | awk -F'&AccountBriefInfo' '{{print $2}}'".format(**self.args)
+        elif self.args["name"]:
+            getaccount_cmd = "cli getaccount -name {name} -nick {nick} -noderpcaddr {noderpcaddr} -noderpcport {noderpcport} | " \
+                             "grep '&AccountBriefInfo' | awk -F'&AccountBriefInfo' '{{print $2}}'".format(**self.args)
+        else:
+            return "Invalid command."
+        self.get_ssh()
+        return self.ssh.remote_exec(getaccount_cmd, self.check)
+
+    def getwalletinfo_args(self):
+        self.arg = self.get_args()
+        self.arg.add_argument("--accname", help="钱包名", required=True)
+        self.arg.add_argument("--nick", help="标识钱包id，默认为: %(default)s", default="pb")
+
+    def getwalletinfo(self):
+        self.get_ssh()
+        getwalletinfo_cmd = "cli getwalletinfo -accname {accname} -nick {nick} | grep INFO | awk -F'client_{nick}: address : ' '{{print $2}}'".format(**self.args)
+        return self.ssh.remote_exec(getwalletinfo_cmd, self.check)
+
     def __del__(self):
         try:
             self.ssh.close()
@@ -121,7 +151,7 @@ class RunCmd(object):
 
 
 if __name__ == "__main__":
-    method = "deposit"
+    method = "getwalletinfo"
     run = RunCmd()
     getattr(run, "%s_args" % method)()
     run.args = vars(run.arg.parse_args())

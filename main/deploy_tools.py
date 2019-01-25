@@ -162,7 +162,7 @@ class Deposit(object):
             account = self.node_info["id"]
         root_addr = self.get_addr("root", self.genesis_info)  # root address
         to_addr = self.get_addr(account, self.node_info)  # deposit account address
-        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -nick %s -password 123456 -toaddr %s ; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -nick %s -toaddr %s -dev 1; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
@@ -172,7 +172,7 @@ class Deposit(object):
     def deposit(self, amount=10000):
         deposit_name = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
-        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -nick %s -source %s" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -nick %s -source %s -dev 1" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
         print("Deposit result [%s]:" % deposit_name)
