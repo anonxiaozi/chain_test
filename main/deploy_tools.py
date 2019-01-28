@@ -18,7 +18,6 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 class DeployNode(MySSH):
     """
     操作noded，需要提供noded的配置信息(node_info)
-    reset: 重置节点，stop -> clean -> init -> start
     stop: 停止节点
     clean: 清除node数据，包括：清除db、备份日志后清空日志、删除钱包
     start: 启动节点
@@ -31,14 +30,6 @@ class DeployNode(MySSH):
         super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
         self.node_info = node_info
         self.genesis_info = genesis_info
-
-    # def reset(self):
-    #     """
-    #     重置节点，首先stop，然后clean，之后init，最后start
-    #     """
-    #     self.stop()
-    #     self.clean()
-    #     self.init()
 
     def init(self):
         """
@@ -206,11 +197,6 @@ class DeployCli(MySSH):
             data = self.remote_exec(self.get_faild_info % self.cli_info["id"])
             return data.split("\n")  # 返回错误信息
 
-    # def reset(self):
-    #     self.stop()
-    #     time.sleep(2)
-    #     self.start()
-
     def init(self):
         self.start()
 
@@ -304,8 +290,8 @@ class Config(object):
             "create_wallet": 0,
             "deposit": False,
             "init_cmd": "cd /root/work; ./noded init -account root -role miner -nick 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
-            "start_cmd": "cd /root/work; nohup ./noded run -account root -nick 3005 -role miner -ip 10.15.101.114 --port 3005 -rpc 1 \
-                             -rpcaddr 0.0.0.0 -rpcport 40001 -dev 1 &> /dev/null &"
+            "start_cmd": "cd /root/work; nohup ./noded run -account root -nick 3005 -role miner -addr 10.15.101.114:3005 -rpc 1 \
+                             -rpcaddr 0.0.0.0:40001 -dev 1 &> /dev/null &"
         }
         for i in range(1, 3):
             self.config["node0%d" % i] = {

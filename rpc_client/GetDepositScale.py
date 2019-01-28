@@ -73,7 +73,7 @@ class GetDepositScale(RPCTest):
         else:
             print(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
-            relate_name_count = {reverse_deposit_id_map[x]: self.deposit_id_count_map[x] for x in self.deposit_id_count_map}
+            relate_name_count = {reverse_deposit_id_map[x]: (self.deposit_id_count_map[x], "{:.2%}".format(self.deposit_id_count_map[x] / height)) for x in self.deposit_id_count_map}
             return relate_name_count
 
     def get_current_height(self):

@@ -44,7 +44,7 @@ class GetDepositAccount(RPCTest):
             else:
                 deposit_map[value] = None
                 sub_deposit_map[value] = None
-        return sub_deposit_map
+        return deposit_map
 
     def run(self):
         return self.status()
