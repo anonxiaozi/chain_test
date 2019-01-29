@@ -23,6 +23,7 @@ class GetDepositAccount(RPCTest):
         self.start_method = "GetDepositAccount"
         self.start_sign = None
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
+        self.arg.add_argument("-f", "--field", help="需要返回的字段", required=False)
 
     @staticmethod
     def change_body(values):
@@ -33,17 +34,18 @@ class GetDepositAccount(RPCTest):
             yield value, body
 
     def status(self):
-        deposit_map, sub_deposit_map = {}, {}
+        deposit_map = {}
         func = self.get_test_obj(self.start_method, self.start_sign)
         data = self.change_body(self.args["accounts"].split(","))
         for value, body in data:
+            deposit_map[value] = {}
             result = func.cli_api(body)
             if "DepositID" in result:
-                deposit_map[value] = result
-                sub_deposit_map[value] = {"DepositID": result["DepositID"], "Amount": result["Amount"]}
-            else:
-                deposit_map[value] = None
-                sub_deposit_map[value] = None
+                if "field" in self.args:
+                    if self.args["field"]:
+                        deposit_map[value] = result[self.args["field"]]
+                    else:
+                        deposit_map[value] = result
         return deposit_map
 
     def run(self):

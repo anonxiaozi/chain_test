@@ -59,3 +59,9 @@ class MySSH(object):
         else:
             result = stdout.read()
         return result.decode("utf-8").strip()
+
+    def __del__(self):
+        try:
+            self.ssh.close()
+        except Exception:
+            pass

@@ -39,7 +39,8 @@ class RunCmd(object):
 
     def createwallet(self):
         self.get_ssh()
-        createwallet_cmd = "cli createwallet -dev 1 -accname {accname} -nick {nick} -type {type}".format(**self.args)
+        createwallet_cmd = "cli createwallet -dev 1 -accname {accname} -nick {nick} -type {type} | " \
+                           "grep INFO | tail -n 1 | awk -F'client_{nick}: ' '{{print $2}}'".format(**self.args)
         return self.ssh.remote_exec(createwallet_cmd, self.check)
 
     def createaccount_args(self):
@@ -160,7 +161,7 @@ class RunCmd(object):
 
     def __del__(self):
         try:
-            self.ssh.close()
+            self.ssh.__del__()
         except Exception:
             pass
 

@@ -4,7 +4,7 @@
 
 """
 获取当前块高度，计算每个质押账户的出块数，接口包括：GetBlockInfoByHeight、GetNodeStatus，返回结果：
-{'root': 2815, '3006': 2966, '3007': 2663}
+{'root': {'Count': 338, 'Scale': '34.49%'}, '3006': {'Count': 227, 'Scale': '23.16%'}}
 """
 
 import sys
@@ -15,6 +15,7 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
 from rpc_client.GetDepositID import GetDepositID
+from rpc_client.GetDepositAccount import GetDepositAccount
 import json
 
 
@@ -35,12 +36,12 @@ class GetDepositScale(RPCTest):
         self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
 
     @staticmethod
-    def change_height_body(height):
-        for key in range(height + 1):
+    def change_height_body(key, values):
+        for value in range(values + 1):
             body = {
-                "Key": str(key)
+                key: str(value)
             }
-            yield key, body
+            yield value, body
 
     def get_block_info(self):
         """
@@ -50,7 +51,11 @@ class GetDepositScale(RPCTest):
         height = self.get_current_height()
         method = "GetBlockInfoByHeight"
         func = self.get_test_obj(method, None)
-        bodys = self.change_height_body(height)
+        bodys = self.change_height_body("Key", height)
+        self.args["field"] = "Amount"
+        get_deposit_amount = GetDepositAccount()
+        get_deposit_amount.args = self.args
+        deposit_amount = get_deposit_amount.run()
         for key, body in bodys:
             if sign > 10:
                 sys.exit(1)  # 出现10次获取块信息错误，停止获取块信息
@@ -73,7 +78,12 @@ class GetDepositScale(RPCTest):
         else:
             print(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
-            relate_name_count = {reverse_deposit_id_map[x]: (self.deposit_id_count_map[x], "{:.2%}".format(self.deposit_id_count_map[x] / height)) for x in self.deposit_id_count_map}
+            relate_name_count = {
+                reverse_deposit_id_map[x]: {
+                    "Count": self.deposit_id_count_map[x],
+                    "Amount": deposit_amount[reverse_deposit_id_map[x]],
+                    "Scale": "{:.2%}".format(self.deposit_id_count_map[x] / height)
+                } for x in self.deposit_id_count_map if x in self.deposit_id_map.values()}
             return relate_name_count
 
     def get_current_height(self):

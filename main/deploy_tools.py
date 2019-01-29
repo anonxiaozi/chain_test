@@ -160,9 +160,10 @@ class Deposit(object):
             print("send failed. [ %s ]" % send_cmd)
             sys.exit(1)
 
-    def deposit(self, amount=10000):
+    def deposit(self):
         deposit_name = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
+        amount = self.node_info["deposit_amount"]
         deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -nick %s -source %s -dev 1" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
@@ -303,6 +304,7 @@ class Config(object):
                 "del_wallet": False,
                 "create_wallet": 0,
                 "deposit": True,
+                "deposit_amount": 10000,
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }
