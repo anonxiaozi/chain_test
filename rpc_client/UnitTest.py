@@ -16,12 +16,13 @@ sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
 import threading
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class UnitTest(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "StartTxTest"
         self.start_sign = "unit_test"
         self.status_method = "GetTxTestStatus"
@@ -60,7 +61,8 @@ class UnitTest(RPCTest):
 
 
 if __name__ == "__main__":
-    unittest = UnitTest()
+    logger = Logger()
+    unittest = UnitTest(logger)
     unittest.args = vars(unittest.arg.parse_args())
     try:
         test_result = unittest.run()

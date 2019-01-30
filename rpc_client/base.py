@@ -21,7 +21,7 @@ class RPCTest(object):
     RPC测试基类，继承时只需编写status方法即可
     """
 
-    def __init__(self):
+    def __init__(self, logger):
         """
         如果测试会自动结束，则除了重写status方法外，也要重写run方法
         """
@@ -33,6 +33,7 @@ class RPCTest(object):
         self.status_sign = ""  # 同 self.start_sign
         self.arg = self.get_args()
         self.args = {}
+        self.logger = logger
 
     @staticmethod
     def get_args():
@@ -44,16 +45,17 @@ class RPCTest(object):
     def deploy(self, action):
         node_list, cli_list = ["genesis"], []
         config = Config(self.args["config"]).read_config()
+        self.logger.info("load config [ {} ]".format(self.args["config"]))
         node_list.extend([x for x in config.keys() if x.startswith("node")])
         cli_list.extend([x for x in config.keys() if x.startswith("cli")])
         for node in node_list:
-            noded = DeployNode(config["genesis"], config[node])
+            noded = DeployNode(config["genesis"], config[node], self.logger)
             noded_result = getattr(noded, action, DeployNode.echo)()
-            check_action_result(noded_result, config[node], action)
+            check_action_result(noded_result, config[node], action, self.logger)
         for cli in cli_list:
-            client = DeployCli(config[cli])
+            client = DeployCli(config[cli], self.logger)
             client_result = getattr(client, action, DeployNode.echo)()
-            check_action_result(client_result, config[cli], action)
+            check_action_result(client_result, config[cli], action, self.logger)
 
     def check_service(self):
         """
@@ -67,7 +69,7 @@ class RPCTest(object):
             self.deploy("init")
 
     def get_test_obj(self, method, sign):
-        func = RunApi(self.args["host"], self.args["port"], method, sign)
+        func = RunApi(self.args["host"], self.args["port"], method, sign, self.logger)
         return func
 
     def start(self):

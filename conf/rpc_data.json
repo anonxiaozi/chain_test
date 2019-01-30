@@ -16,7 +16,7 @@
                 "TestType": "token_transfer",
                 "TestProperties": {
                     "TxCount": "100",
-                    "AccCount": "3",
+                    "AccCount": "300",
                     "SendSpan": "100"
                 }
             }

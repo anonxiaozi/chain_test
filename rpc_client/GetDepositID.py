@@ -16,20 +16,22 @@ sys.path.insert(0, BASEDIR)
 from tools.remote_exec import MySSH
 import re
 import argparse
+from tools.logger import Logger
 
 
 class GetDepositID(object):
 
-    def __init__(self):
+    def __init__(self, logger):
         self.id_re = re.compile(r"client_pb:\s(\d{19})\s?")
         self.arg = argparse.ArgumentParser(prog="Get Deposit ID")
         self.arg.add_argument("host", type=str, help="服务器地址")
         self.arg.add_argument("port", type=int, help="服务器端口")
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
         self.args = {}
+        self.logger = logger
 
     def status(self):
-        ssh = MySSH(self.args["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22)
+        ssh = MySSH(self.args["host"], username="root", keyfile=os.path.join(CONFIGDIR, "id_rsa_jump"), port=22, logger=self.logger)
         accounts = self.args["accounts"].split(",")
         if not accounts:
             return
@@ -46,7 +48,8 @@ class GetDepositID(object):
 
 
 if __name__ == "__main__":
-    do = GetDepositID()
+    logger = Logger()
+    do = GetDepositID(logger)
     do.args = vars(do.arg.parse_args())
     id_map = do.run()
     print(id_map)

@@ -14,12 +14,13 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class UnlockWallet(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "UnlockWallet"
         self.start_sign = None
         self.arg.add_argument("-d", "--addr", help="要解锁的钱包地址", required=True)
@@ -37,8 +38,8 @@ class UnlockWallet(RPCTest):
 
 
 if __name__ == "__main__":
-
-    unlockwallet = UnlockWallet()
+    logger = Logger()
+    unlockwallet = UnlockWallet(logger)
     unlockwallet.args = vars(unlockwallet.arg.parse_args())
     result = unlockwallet.run()
     if result: print(result)

@@ -17,20 +17,22 @@ from rpc_client.base import RPCTest
 from rpc_client.GetDepositID import GetDepositID
 from rpc_client.GetDepositAccount import GetDepositAccount
 import json
+from tools.logger import Logger
 
 
 class GetDepositScale(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
+        self.logger = logger
 
     def get_block_depositid(self):
         """
         获取块信息中的质押ID
         :param dict_data: 命令行参数信息
         """
-        deposit = GetDepositID()
+        deposit = GetDepositID(self.logger)
         deposit.args = self.args
         self.deposit_id_map = deposit.status()
         self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
@@ -53,7 +55,7 @@ class GetDepositScale(RPCTest):
         func = self.get_test_obj(method, None)
         bodys = self.change_height_body("Key", height)
         self.args["field"] = "Amount"
-        get_deposit_amount = GetDepositAccount()
+        get_deposit_amount = GetDepositAccount(self.logger)
         get_deposit_amount.args = self.args
         deposit_amount = get_deposit_amount.run()
         for key, body in bodys:
@@ -77,6 +79,7 @@ class GetDepositScale(RPCTest):
                 sign += 1
         else:
             print(("Block Height [ %s ]" % height).center(100, "="))
+            self.logger.info(("Block Height [ %s ]" % height).center(100, "="))
             reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
             relate_name_count = {
                 reverse_deposit_id_map[x]: {
@@ -84,6 +87,7 @@ class GetDepositScale(RPCTest):
                     "Amount": deposit_amount[reverse_deposit_id_map[x]],
                     "Scale": "{:.2%}".format(self.deposit_id_count_map[x] / height)
                 } for x in self.deposit_id_count_map if x in self.deposit_id_map.values()}
+            self.logger.info("[O] {}".format(relate_name_count))
             return relate_name_count
 
     def get_current_height(self):
@@ -126,7 +130,8 @@ class GetDepositScale(RPCTest):
 
 
 if __name__ == "__main__":
-    deposit_scale = GetDepositScale()
+    logger = Logger()
+    deposit_scale = GetDepositScale(logger)
     deposit_scale.args = vars(deposit_scale.arg.parse_args())
     try:
         map_account_count = deposit_scale.run()

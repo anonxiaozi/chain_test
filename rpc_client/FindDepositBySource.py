@@ -14,12 +14,13 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class FindDepositBySource(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "FindDepositBySource"
         self.start_sign = None
         self.arg.add_argument("-a", "--addr", help="address,多个地址用逗号分隔", required=True)
@@ -46,7 +47,8 @@ class FindDepositBySource(RPCTest):
 
 
 if __name__ == "__main__":
-    finddeposit = FindDepositBySource()
+    logger = Logger()
+    finddeposit = FindDepositBySource(logger)
     finddeposit.args = vars(finddeposit.arg.parse_args())
     result = finddeposit.run()
     print(result)

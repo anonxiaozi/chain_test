@@ -12,12 +12,15 @@ import logging
 import datetime
 
 
-def Logger(log_name):
+def Logger(log_name=None):
+    if not log_name:
+        log_name = "{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d"))
     logger = logging.getLogger("Block")
-    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s [%(filename)s:%(lineno)s] %(message)s")
-    fh = logging.FileHandler(os.path.join(LOGDIR, log_name), "w")
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s %(message)s   [%(filename)s:%(lineno)s]")
+    fh = logging.FileHandler(os.path.join(LOGDIR, log_name), "a")
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+    logger.setLevel(logging.DEBUG)
     return logger
 
 

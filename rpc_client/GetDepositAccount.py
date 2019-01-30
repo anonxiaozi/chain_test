@@ -14,12 +14,13 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class GetDepositAccount(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "GetDepositAccount"
         self.start_sign = None
         self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
@@ -53,7 +54,8 @@ class GetDepositAccount(RPCTest):
 
 
 if __name__ == "__main__":
-    get_info = GetDepositAccount()
+    logger = Logger()
+    get_info = GetDepositAccount(logger)
     get_info.args = vars(get_info.arg.parse_args())
     deposit_map = get_info.run()
     for key, value in deposit_map.items():

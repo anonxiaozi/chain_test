@@ -10,13 +10,15 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from tools.remote_exec import MySSH
+from tools.logger import Logger
 
 
 class RunCmd(object):
 
-    def __init__(self):
+    def __init__(self, logger):
         self.args = None
         self.check = True
+        self.logger = logger
 
     @staticmethod
     def get_args():
@@ -28,7 +30,7 @@ class RunCmd(object):
         return arg
 
     def get_ssh(self):
-        self.ssh = MySSH(self.args["host"], self.args["user"], self.args["key"], self.args["port"])
+        self.ssh = MySSH(self.args["host"], self.args["user"], self.args["key"], self.args["port"], self.logger)
         self.ssh.login_auth()
 
     def createwallet_args(self):
@@ -152,8 +154,10 @@ class RunCmd(object):
     def echo(self):
         return "Invalid method"
 
-    def run(self, method):
-        print(("[ {} ] [CMD]".format(method)).center(80, "*"))
+    def run(self, method, logger):
+        action_echo = ("[ {} ] [CMD]".format(method)).center(80, "*")
+        print(action_echo)
+        logger.info(action_echo)
         getattr(self, "{}_args".format(method), self.echo)()
         result = getattr(self, method, self.echo)()
         print(result)
@@ -167,8 +171,9 @@ class RunCmd(object):
 
 
 if __name__ == "__main__":
+    logger = Logger()
     method = "getwalletinfo"
-    run = RunCmd()
+    run = RunCmd(logger)
     getattr(run, "%s_args" % method)()
     run.args = vars(run.arg.parse_args())
     result = getattr(run, method)()

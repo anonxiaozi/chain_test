@@ -14,12 +14,13 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class GetAccountByName(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "GetAccountByName"
         self.start_sign = None
         self.arg.add_argument("-n", "--name", help="账户名，多个账户名用逗号分隔", required=True)
@@ -48,7 +49,8 @@ class GetAccountByName(RPCTest):
 
 
 if __name__ == "__main__":
-    getaccount = GetAccountByName()
+    logger = Logger()
+    getaccount = GetAccountByName(logger)
     getaccount.args = vars(getaccount.arg.parse_args())
     result = getaccount.run()
     for account, info in result.items():

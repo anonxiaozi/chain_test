@@ -10,11 +10,10 @@ import sys
 import time
 import os
 
-# import importlib
-
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
+from tools.logger import Logger
 
 
 class ApiTestData(object):
@@ -41,12 +40,13 @@ class ApiTestData(object):
 
 class RunApi(ApiTestData):
 
-    def __init__(self, host, port, method, sign):
+    def __init__(self, host, port, method, sign, logger):
         super().__init__()
         self.host = host
         self.port = port
         self.method = method
         self.sign = sign
+        self.logger = logger
 
     def cli_api(self, body=None):
         url, data, headers = self.action(self.method, self.sign)
@@ -56,15 +56,22 @@ class RunApi(ApiTestData):
             if not isinstance(data, bytes):
                 data = json.dumps(data).encode("utf-8")
         if not url:
-            return "ERROR: method not found: %s" % self.method
+            data = "ERROR: method not found: %s" % self.method
+            self.logger.error(data)
+            return data
         req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
+        self.logger.info("[I] {} [{}] {}".format(req.get_full_url(), req.get_method(), req.data))
         try:
             res = urllib.request.urlopen(req, timeout=10)
         except urllib.error.HTTPError as e:
-            return json.loads(e.fp.read().decode("utf-8"))
+            data = json.loads(e.fp.read().decode("utf-8"))
+            self.logger.error("[O] {}".format(data))
         except Exception as e:
+            self.logger.error("[O] {}".format(e))
             return "Error: %s" % e
-        return json.loads(res.read().decode("utf-8"))
+        data = json.loads(res.read().decode("utf-8"))
+        self.logger.info("[O] {}".format(data))
+        return data
 
     @staticmethod
     def echo_monit_result(result, field=None):
@@ -105,9 +112,9 @@ class RunApi(ApiTestData):
 
 
 if __name__ == "__main__":
-
+    logger = Logger()
     host, port, method = "10.15.101.35", 60002, "GetNodeStatus"
-    use = RunApi(host, port, method, None)
+    use = RunApi(host, port, method, None, logger)
     url, data, headers = use.action(method, None)
     if not url:
         print("Method not found: %s" % method)

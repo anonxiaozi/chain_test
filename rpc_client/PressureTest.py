@@ -15,12 +15,13 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
 from rpc_client.base import RPCTest
+from tools.logger import Logger
 
 
 class PressureTest(RPCTest):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, logger):
+        super().__init__(logger)
         self.start_method = "StartTxTest"
         self.start_sign = "pressure_test"
         self.status_method = "GetTxTestStatus"
@@ -45,7 +46,8 @@ class PressureTest(RPCTest):
 
 
 if __name__ == "__main__":
-    pressure = PressureTest()
+    logger = Logger()
+    pressure = PressureTest(logger)
     pressure.args = vars(pressure.arg.parse_args())
     try:
         pressure.run()

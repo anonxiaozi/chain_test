@@ -23,11 +23,12 @@ class DeployNode(MySSH):
     start: 启动节点
     """
 
-    stop_cmd = 'kill -9 $(pgrep noded$) ; kill -9 $(pgrep pbcli$)'
+    stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
     get_faild_info = "cd /root/work/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
-    def __init__(self, genesis_info, node_info):
-        super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
+    def __init__(self, genesis_info, node_info, logger):
+        self.logger = logger
+        super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"), self.logger)
         self.node_info = node_info
         self.genesis_info = genesis_info
 
@@ -74,7 +75,9 @@ class DeployNode(MySSH):
         if start_status:
             return start_status
         else:
-            print("start noded [%s] successfully." % self.node_info["address"])
+            data = "start noded [%s] successfully." % self.node_info["address"]
+            self.logger.info(data)
+            print(data)
 
     def status(self):
         result = self.remote_exec("pgrep -a noded$ | grep %s &> /dev/null ; echo $?" % self.node_info["id"])
@@ -93,9 +96,12 @@ class DeployNode(MySSH):
         """
         检查mongod是否启动
         """
-        result = self.remote_exec("pgrep mongod &> /dev/null; echo $?")
+        check_mongo_cmd = "pgrep mongod &> /dev/null; echo $?"
+        result = self.remote_exec(check_mongo_cmd)
         if result != "0":
-            print("Mongod service did not start [%s]." % self.node_info["address"])
+            result = "Mongod service did not start [%s]." % self.node_info["address"]
+            self.logger.warning(result)
+            print(result)
             self.start_mongo()
 
     def start_mongo(self):
@@ -103,9 +109,13 @@ class DeployNode(MySSH):
         启动mongod，使用默认的dbpath：/data/db
         """
         print("Start mongodb...")
-        result = self.remote_exec("mkdir -p /opt/mongo_data; touch /opt/mongo.log ; mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null")
+        self.logger.info("Start mongodb...")
+        start_mongo_cmd = "mkdir -p /opt/mongo_data; touch /opt/mongo.log ; mongod --dbpath /data/db --bind_ip_all --syslog --noauth --fork &> /dev/null"
+        result = self.remote_exec(start_mongo_cmd)
         if result != "0":
-            return "Mongod service start failed [%s]." % self.node_info["address"]
+            data = "Mongod service start failed [%s]." % self.node_info["address"]
+            self.logger.error(data)
+            return data
 
     @staticmethod
     def echo():
@@ -114,13 +124,13 @@ class DeployNode(MySSH):
 
 class Deposit(object):
 
-    def __init__(self, genesis_info, node_info):
+    def __init__(self, genesis_info, node_info, logger):
         self.genesis_info = genesis_info
         self.node_info = node_info
+        self.logger = logger
 
-    @staticmethod
-    def get_ssh_obj(node_info):
-        ssh = MySSH(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"))
+    def get_ssh_obj(self, node_info):
+        ssh = MySSH(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"), self.logger)
         return ssh
 
     def get_pubkey(self, account, node_info):
@@ -135,7 +145,9 @@ class Deposit(object):
         if result:
             return result
         else:
-            print("Get p2paddr failed. [%s]" % get_pubkey_cmd)
+            data = "Get p2paddr failed. [%s]" % get_pubkey_cmd
+            self.logger.error("{} Exit...".format(data))
+            print(data)
             sys.exit(1)
 
     def get_addr(self, account, node_info):
@@ -145,7 +157,9 @@ class Deposit(object):
         if result.startswith("0x"):
             return result
         else:
-            print("Get addr failed. [%s] %s" % (get_addr_cmd, result))
+            data = "Get addr failed. [%s] %s" % (get_addr_cmd, result)
+            self.logger.error("{} Exit...".format(data))
+            print(data)
             sys.exit(1)
 
     def send(self, account=None, amount=20000):
@@ -157,7 +171,9 @@ class Deposit(object):
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
-            print("send failed. [ %s ]" % send_cmd)
+            data = "send failed. [ %s ]" % send_cmd
+            self.logger.error("{} Exit...".format(data))
+            print(data)
             sys.exit(1)
 
     def deposit(self):
@@ -182,12 +198,13 @@ class DeployCli(MySSH):
     match_id = re.compile(r'-nick\s+?(\d+?)\s')
     get_faild_info = "cd /root/work; grep -i -E 'panic|warn' cli_%s.log"
 
-    def __init__(self, cli_info):
-        super().__init__(cli_info["address"], cli_info["ssh_user"], cli_info["ssh_key"], cli_info.getint("ssh_port"))
+    def __init__(self, cli_info, logger):
+        super().__init__(cli_info["address"], cli_info["ssh_user"], cli_info["ssh_key"], cli_info.getint("ssh_port"), logger)
         self.cli_info = cli_info
+        self.logger = logger
 
     def stop(self):
-        self.remote_exec('kill -9 $(pgrep ^pbcli$)')
+        self.remote_exec('kill -9 $(pgrep pbcli$) &> /dev/null')
 
     def status(self):
         result = self.remote_exec('pgrep -a ^pbcli$')
@@ -196,6 +213,7 @@ class DeployCli(MySSH):
             return
         else:
             data = self.remote_exec(self.get_faild_info % self.cli_info["id"])
+            self.logger.error(data)
             return data.split("\n")  # 返回错误信息
 
     def init(self):
@@ -271,16 +289,11 @@ class Config(object):
 
     def list_config(self):
         if not os.path.exists(self.filename):
-            return "This file was not found [ %s ]" % self.filename
-        with open(self.filename, "r") as f:
-            for line in f.readlines():
-                print(line, end="")
             return
+        with open(self.filename, "r") as f:
+            return f.read()
 
     def generate_config(self):
-        # self.config["global"] = {
-        #     "leader": "127.0.0.1:3000"
-        # }
         self.config["genesis"] = {
             "address": "127.0.0.1",
             "ssh_user": "root",
@@ -325,31 +338,31 @@ class Config(object):
             self.config.write(f, space_around_delimiters=True)
 
 
-def check_file_exists(*filename):
+def check_file_exists(filename):
     """
     检查给定的文件是否存在
     :param filename: 文件名，tuple类型
     :return: 如果有文件不存在，则追加到列表中并返回
     """
-    not_exists_list = []
-    for f in filename:
-        if not os.path.exists(f):
-            not_exists_list.append(f)
+    if not os.path.exists(filename):
+        return "File not found: {}".format(filename)
     else:
-        if not_exists_list:
-            print("File not found: %s" % not_exists_list)
-            sys.exit()
+        return filename
 
 
-def check_action_result(result, config, action):
+def check_action_result(result, config, action, logger):
     try:
         if result and result != "Hello.":
-            print("%s %s [%s] faild. Error:" % (action, config.name, config["address"]))
+            data = "%s %s [%s] faild. Error:" % (action, config.name, config["address"])
+            logger.error(data)
             for err in result:
                 print(err)
-                sys.exit(1)
+            else:
+                logger.error(result)
         else:
-            print("%s %s [%s] successfully." % (action, config.name, config["address"]))
+            data = "%s %s [%s] successfully." % (action, config.name, config["address"])
+            print(data)
+            logger.info(data)
     except Exception as e:
-        print("ERROR.")
-        sys.exit()
+        print(e)
+        return logger.error(e)

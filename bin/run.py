@@ -9,6 +9,8 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from tools.bin_tools import EveryOne
+from tools.logger import Logger
+import datetime
 
 
 def get_args():
@@ -54,6 +56,8 @@ def get_args():
 
 
 if __name__ == '__main__':
+    log_name = "{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d"))
+    logger = Logger(log_name)
     args_obj = get_args()
     args = vars(args_obj.parse_args())
     operate = args["sub"]
@@ -61,7 +65,7 @@ if __name__ == '__main__':
         args_obj.print_help()  # 打印help信息
         sys.exit(0)
     try:
-        run = EveryOne(args)
+        run = EveryOne(args, logger)
         getattr(run, "do_%s" % args["sub"])()
     except KeyboardInterrupt:
         print("\nExit.")
