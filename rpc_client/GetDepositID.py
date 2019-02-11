@@ -22,7 +22,7 @@ from tools.logger import Logger
 class GetDepositID(object):
 
     def __init__(self, logger):
-        self.id_re = re.compile(r"client_pb:\s(\d{19})\s?")
+        self.id_re = re.compile(r"client_pb:\s(\d{18,25})\s?")
         self.arg = argparse.ArgumentParser(prog="Get Deposit ID")
         self.arg.add_argument("host", type=str, help="服务器地址")
         self.arg.add_argument("port", type=int, help="服务器端口")

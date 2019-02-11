@@ -101,11 +101,11 @@ class RunTest(RunCmd):
         print(get_scale_result)
 
     def start(self):
-        # self.deploy()
-        # DeployNode.wait(5)
+        self.deploy()
+        DeployNode.wait(5)
         self.cmd_run()
         self.rpc_run()
-        DeployNode.wait(120)
+        DeployNode.wait(500)
         self.other_run()
 
 
@@ -118,9 +118,14 @@ if __name__ == "__main__":
         "key": os.path.join(CONFIGDIR, "id_rsa_jump"),
         "accounts": "root,3006,3007",
         "rpc_ports": "60002,60012,60022"
-    }
-    logger = Logger()
+    }  # accounts用来请求质押比例时所需的账户，rpc_ports用来验证多个节点数据相同时用到
+    logfile_name = "test_{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d_%H_%M"))
+    logger = Logger(logfile_name)
     logger.info("< Start test >".center(100, "*"))
     do_test = RunTest(data=data, logger=logger)
-    do_test.start()
-    logger.info("< End test >".center(100, "*"))
+    try:
+        do_test.start()
+    except KeyboardInterrupt:
+        sys.exit("Exit.")
+    finally:
+        logger.info("< End test >".center(100, "*"))
