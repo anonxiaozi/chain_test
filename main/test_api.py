@@ -59,8 +59,11 @@ class RunApi(ApiTestData):
             data = "ERROR: method not found: %s" % self.method
             self.logger.error(data)
             return data
-        req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
-        self.logger.info("[I] {} [{}] {}".format(req.get_full_url(), req.get_method(), req.data))
+        try:
+            req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
+            self.logger.info("[I] {} [{}] {}".format(req.get_full_url(), req.get_method(), req.data))
+        except Exception as e:
+            self.logger.error(e)
         try:
             res = urllib.request.urlopen(req, timeout=10)
         except urllib.error.HTTPError as e:

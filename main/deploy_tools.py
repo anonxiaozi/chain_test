@@ -329,6 +329,7 @@ class Config(object):
                 "ssh_key": os.path.join(CONFIGDIR, "id_rsa_jump"),
                 "id": "300%d" % i,
                 "del_wallet": False,
+                "rpc_port": 60002,
                 "start_cmd": "cli service..."
             }
         self.write()

@@ -11,6 +11,7 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from tools.remote_exec import MySSH
 from tools.logger import Logger
+from main.deploy_tools import Config
 
 
 class RunCmd(object):
@@ -23,7 +24,7 @@ class RunCmd(object):
     @staticmethod
     def get_args():
         arg = argparse.ArgumentParser(prog="CMD测试")
-        arg.add_argument("-d", "--host", type=str, help="服务器地址,默认为: %(default)s", default="10.15.101.77")
+        arg.add_argument("-d", "--host", type=str, help="服务器地址,默认为: %(default)s", default="10.15.101.114")
         arg.add_argument("-p", "--port", type=int, help="服务器端口,默认为: %(default)s", default=22)
         arg.add_argument("-u", "--user", help="SSH登陆用户名，默认为: %(default)s", default="root")
         arg.add_argument("-k", "--key", type=str, help="SSH密钥存放位置，默认为:%(default)s", default=os.path.join(CONFIGDIR, "id_rsa_jump"), required=False)
@@ -150,6 +151,32 @@ class RunCmd(object):
         self.get_ssh()
         getwalletinfo_cmd = "cli getwalletinfo -accname {accname} -nick {nick} | grep INFO | awk -F'client_{nick}: address : ' '{{print $2}}'".format(**self.args)
         return self.ssh.remote_exec(getwalletinfo_cmd, self.check)
+
+    def stop_node_args(self):
+        self.arg = self.get_args()
+        self.arg.add_argument("--id", help="标配置文件中的节点ID", required=True)
+
+    def stop_node(self):
+        self.get_ssh()
+        stop_node_cmd = "kill -9 `pgrep -a noded$ | grep '\-nick {id}' | awk '{{print $1}}'` &> /dev/null".format(**self.args)
+        print("Bash: {}".format(stop_node_cmd))
+        return self.ssh.remote_exec(stop_node_cmd, False)
+
+    def start_node_args(self):
+        self.arg = self.get_args()
+        self.arg.add_argument("--id", help="标配置文件中的节点ID", required=True)
+
+    def start_node(self):
+        self.get_ssh()
+        configobj = Config(self.args["config_file"])
+        config = configobj.read_config()
+        try:
+            start_node_cmd = config[self.args["id"]]["start_cmd"]
+            print("Bash: {}".format(start_node_cmd))
+            return self.ssh.remote_exec(start_node_cmd, False)
+        except Exception as e:
+            print(e)
+            return e
 
     def echo(self):
         return "Invalid method"
