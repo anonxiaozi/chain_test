@@ -78,7 +78,7 @@ chain_test-master/
 address = 10.15.101.114             # IP地址
 ssh_user = root                     # SSH连接用户名
 ssh_port = 22                       # SSH连接端口
-ssh_key = G:\python_objects\chain_test\conf\id_rsa_jump     # SSH连接私钥
+ssh_key = /root/block_test/chain_test-master/conf/id_rsa_jump     # SSH连接私钥
 id = 3005                           # 表示节点ID
 del_wallet = False
 create_wallet = 0
@@ -91,7 +91,7 @@ start_cmd = cd /root/work; nohup ./noded run -account root -nick 3005 -role mine
 address = 10.15.101.114
 ssh_user = root
 ssh_port = 22
-ssh_key = G:\python_objects\chain_test\conf\id_rsa_jump
+ssh_key = /root/block_test/chain_test-master/conf/id_rsa_jump
 id = 3006
 del_wallet = False
 create_wallet = 1
@@ -105,7 +105,7 @@ start_cmd = cd /root/work; nohup ./noded run -account 3006 -nick 3006 -role mine
 address = 10.15.101.114
 ssh_user = root
 ssh_port = 22
-ssh_key = G:\python_objects\chain_test\conf\id_rsa_jump
+ssh_key = /root/block_test/chain_test-master/conf/id_rsa_jump
 id = 3005
 del_wallet = False
 rpc_port = 60002                    # CLI启动的RPC端口
@@ -115,7 +115,7 @@ start_cmd = cd /root/work; nohup ./pbcli service -clirpcaddr 0.0.0.0 -nick 3005 
 address = 10.15.101.114
 ssh_user = root
 ssh_port = 22
-ssh_key = G:\python_objects\chain_test\conf\id_rsa_jump
+ssh_key = /root/block_test/chain_test-master/conf/id_rsa_jump
 id = 3006
 del_wallet = False
 rpc_port = 60012
@@ -148,10 +148,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -c CONFIG, --config CONFIG        # 制定配置文件
+  -c CONFIG, --config CONFIG        # 指定配置文件
                         config file name, the file directory is
-                        G:\python_objects\chain_test\conf , Default:
-                        G:\python_objects\chain_test\conf\config.ini
+                        /root/block_test/chain_test-master/conf , Default:
+                        /root/block_test/chain_test-master/conf/config.ini
 ```
 
 ---
