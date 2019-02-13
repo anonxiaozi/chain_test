@@ -154,7 +154,7 @@ class RunCmd(object):
 
     def stop_node_args(self):
         self.arg = self.get_args()
-        self.arg.add_argument("--id", help="标配置文件中的节点ID", required=True)
+        self.arg.add_argument("--id", help="标识配置文件中的节点ID", required=True)
 
     def stop_node(self):
         self.get_ssh()
@@ -166,27 +166,21 @@ class RunCmd(object):
         self.arg = self.get_args()
         self.arg.add_argument("--id", help="标配置文件中的节点ID", required=True)
 
-    def start_node(self):
+    def start_node(self, **kwargs):
         self.get_ssh()
-        configobj = Config(self.args["config_file"])
-        config = configobj.read_config()
-        try:
-            start_node_cmd = config[self.args["id"]]["start_cmd"]
-            print("Bash: {}".format(start_node_cmd))
-            return self.ssh.remote_exec(start_node_cmd, False)
-        except Exception as e:
-            print(e)
-            return e
+        start_cmd = kwargs["start_cmd"]
+        print("Bash: {}".format(start_cmd))
+        return self.ssh.remote_exec(start_cmd, False)
 
     def echo(self):
         return "Invalid method"
 
-    def run(self, method, logger):
+    def run(self, method, logger, **kwargs):
         action_echo = ("[ {} ] [CMD]".format(method)).center(80, "*")
         print(action_echo)
         logger.info(action_echo)
         getattr(self, "{}_args".format(method), self.echo)()
-        result = getattr(self, method, self.echo)()
+        result = getattr(self, method, self.echo)(**kwargs)
         print(result)
         return result
 

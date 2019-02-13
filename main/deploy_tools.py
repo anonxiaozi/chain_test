@@ -318,6 +318,7 @@ class Config(object):
                 "create_wallet": 0,
                 "deposit": True,
                 "deposit_amount": 10000,
+                "cli_rpc_port": 60002,
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }
