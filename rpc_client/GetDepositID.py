@@ -13,10 +13,10 @@ import os
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
-from tools.remote_exec import MySSH
+from main.remote_exec import MySSH
 import re
 import argparse
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class GetDepositID(object):

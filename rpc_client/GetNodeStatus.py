@@ -14,7 +14,7 @@ import os
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class GetNodeStatus(RPCTest):

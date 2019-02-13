@@ -16,7 +16,7 @@ sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
 import threading
 from rpc_client.base import RPCTest
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class UnitTest(RPCTest):

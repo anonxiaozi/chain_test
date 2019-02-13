@@ -17,7 +17,7 @@ from rpc_client.base import RPCTest
 from rpc_client.GetDepositID import GetDepositID
 from rpc_client.GetDepositAccount import GetDepositAccount
 import json
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class GetDepositScale(RPCTest):

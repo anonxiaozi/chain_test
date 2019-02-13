@@ -13,7 +13,7 @@ import os
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class ApiTestData(object):

@@ -15,7 +15,7 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from main.test_api import RunApi
 from rpc_client.base import RPCTest
-from tools.logger import Logger
+from main.logger import Logger
 
 
 class PressureTest(RPCTest):

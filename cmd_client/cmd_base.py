@@ -9,9 +9,8 @@ import argparse
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
-from tools.remote_exec import MySSH
-from tools.logger import Logger
-from main.deploy_tools import Config
+from main.remote_exec import MySSH
+from main.logger import Logger
 
 
 class RunCmd(object):

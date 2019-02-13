@@ -9,7 +9,7 @@ import sys
 import re
 import os
 import configparser
-from tools.remote_exec import MySSH
+from main.remote_exec import MySSH
 
 BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIGDIR = os.path.join(BASEDIR, "conf")
@@ -291,7 +291,7 @@ class Config(object):
         if not os.path.exists(self.filename):
             return
         with open(self.filename, "r") as f:
-            return f.read()
+            return f.readlines()
 
     def generate_config(self):
         self.config["genesis"] = {

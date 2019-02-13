@@ -6,4 +6,4 @@ conf/multi_node.ini
 daily_test
 do_test.py
 __pycache__
-logs
+logs/*

@@ -14,10 +14,10 @@ sys.path.insert(0, BASEDIR)
 from cmd_client.cmd_base import RunCmd
 from rpc_client.GetDepositAccount import GetDepositAccount
 from rpc_client.GetAccountByAddr import GetAccountByAddr
-from tools.bin_tools import EveryOne
+from main.bin_tools import EveryOne
 from main.deploy_tools import DeployNode
 from rpc_client.GetDepositScale import GetDepositScale
-from tools.logger import Logger
+from main.logger import Logger
 from rpc_client.GetNodeStatus import GetNodeStatus
 from main.deploy_tools import Config
 from rpc_client.GetBlockInfoByHeight import GetBlockInfoByHeight
