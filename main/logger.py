@@ -24,6 +24,8 @@ import datetime
 
 
 def Logger(log_name="{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d")), level=10):
+    if not os.path.exists(LOGDIR):
+        os.mkdir(LOGDIR)
     logger = logging.getLogger("Block")
     formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s %(message)s   [%(filename)s:%(lineno)s]")
     fh = logging.FileHandler(os.path.join(LOGDIR, log_name), "a")
