@@ -102,7 +102,7 @@ class RunTest(RunCmd):
         for cli in cli_list:
             self.args["port"] = int(self.config[cli]["rpc_port"])
             self.args["host"] = self.config[cli]["address"]
-            start_echo = "[ GetAccountByAddr ] [RPC] <{}>".format(self.config[cli]["rpc_port"]).center(80, "*")
+            start_echo = "[ GetAccountByAddr ] [RPC] <{}:{}>".format(self.config[cli]["address"], self.config[cli]["rpc_port"]).center(80, "*")
             self.logger.info(start_echo)
             print(start_echo)
             getaccountbyaddr = GetAccountByAddr(self.logger)
