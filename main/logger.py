@@ -33,12 +33,3 @@ def Logger(log_name="{}.log".format(datetime.datetime.now().strftime("%Y_%m_%d")
     logger.addHandler(fh)
     logger.setLevel(level)
     return logger
-
-
-if __name__ == "__main__":
-    logger = Logger("{}.log".format(datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
-    logger.setLevel(logging.DEBUG)
-    logger.info("[%s]: info test", "I")
-    logger.warning("[%s]: warning test", "O")
-    logger.error("error test")
-    logger.debug("debug test")
