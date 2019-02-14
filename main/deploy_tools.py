@@ -26,11 +26,10 @@ class DeployNode(MySSH):
     stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
     get_faild_info = "cd /root/work/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
-    def __init__(self, genesis_info, node_info, logger):
+    def __init__(self, node_info, logger):
         self.logger = logger
         super().__init__(node_info["address"], node_info["ssh_user"], node_info["ssh_key"], node_info.getint("ssh_port"), self.logger)
         self.node_info = node_info
-        self.genesis_info = genesis_info
 
     def init(self):
         """
@@ -167,7 +166,8 @@ class Deposit(object):
             account = self.node_info["id"]
         root_addr = self.get_addr("root", self.genesis_info)  # root address
         to_addr = self.get_addr(account, self.node_info)  # deposit account address
-        send_cmd = "cd /root/work; ./cli send -amount %s -from %s -nick %s -toaddr %s -dev 1; echo $?" % (amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+        send_cmd = "cd /root/work; ./cli send -amount {} -from {} -nick {} -toaddr {} -dev 1; echo $?".format(
+            amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
@@ -180,10 +180,14 @@ class Deposit(object):
         deposit_name = self.node_info["id"]
         source_addr = self.get_addr(self.node_info["id"], self.node_info)
         amount = self.node_info["deposit_amount"]
-        deposit_cmd = "cd /root/work; ./cli deposit -amount %s -blsname %s -deposit %s -nick %s -source %s -dev 1" % (amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
+        if int(amount) == 0:
+            print("Don't deposit [{}]".format(deposit_name))
+            return deposit_name
+        deposit_cmd = "cd /root/work; ./cli deposit -amount {} -blsname {} -deposit {} -nick {} -source {} -dev 1".format(
+            amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
-        print("Deposit result [%s]:" % deposit_name)
+        print("Deposit result [{}]:".format(deposit_name))
         for item in result.split("\n"):
             print(item)
         return deposit_name
@@ -361,10 +365,13 @@ def check_action_result(result, config, action, logger):
                 print(err)
             else:
                 logger.error(result)
+                return result
         else:
             data = "%s %s [%s] successfully." % (action, config.name, config["address"])
-            print(data)
             logger.info(data)
+            print(data)
+            return data
     except Exception as e:
+        logger.error(e)
         print(e)
-        return logger.error(e)
+        return e

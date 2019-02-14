@@ -49,7 +49,7 @@ class RPCTest(object):
         node_list.extend([x for x in config.keys() if x.startswith("node")])
         cli_list.extend([x for x in config.keys() if x.startswith("cli")])
         for node in node_list:
-            noded = DeployNode(config["genesis"], config[node], self.logger)
+            noded = DeployNode(config[node], self.logger)
             noded_result = getattr(noded, action, DeployNode.echo)()
             check_action_result(noded_result, config[node], action, self.logger)
         for cli in cli_list:

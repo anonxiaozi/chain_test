@@ -43,7 +43,7 @@ class RunApi(ApiTestData):
     def __init__(self, host, port, method, sign, logger):
         super().__init__()
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.method = method
         self.sign = sign
         self.logger = logger
@@ -62,19 +62,16 @@ class RunApi(ApiTestData):
         try:
             req = urllib.request.Request(url="http://%s:%d/%s" % (self.host, self.port, url), data=data, headers=headers)
             self.logger.info("[I] {} [{}] {}".format(req.get_full_url(), req.get_method(), req.data))
-        except Exception as e:
-            self.logger.error(e)
-        try:
             res = urllib.request.urlopen(req, timeout=10)
+            data = json.loads(res.read().decode("utf-8"))
+            self.logger.info("[O] {}".format(data))
+            return data
         except urllib.error.HTTPError as e:
             data = json.loads(e.fp.read().decode("utf-8"))
             self.logger.error("[O] {}".format(data))
         except Exception as e:
             self.logger.error("[O] {}".format(e))
             return "Error: %s" % e
-        data = json.loads(res.read().decode("utf-8"))
-        self.logger.info("[O] {}".format(data))
-        return data
 
     @staticmethod
     def echo_monit_result(result, field=None):

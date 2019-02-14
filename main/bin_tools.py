@@ -89,13 +89,13 @@ class EveryOne(object):
         else:
             node_list.extend([x for x in config.keys() if x.startswith("node")])
             if "genesis" in config:
-                genesis = DeployNode(config["genesis"], config["genesis"], self.logger)
+                genesis = DeployNode(config["genesis"], self.logger)
                 genesis_result = getattr(genesis, action, DeployNode.echo)()
                 check_action_result(genesis_result, config["genesis"], action, self.logger)
                 if action in ["reset", "start", "init"]:
                     DeployNode.wait(2)
             for node in node_list:
-                noded_obj = DeployNode(config["genesis"], config[node], self.logger)
+                noded_obj = DeployNode(config[node], self.logger)
                 noded_result = getattr(noded_obj, action, DeployNode.echo)()
                 check_action_result(noded_result, config[node], action, self.logger)
             if action == "init":

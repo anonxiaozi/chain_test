@@ -278,7 +278,7 @@ class RunTest(RunCmd):
         self.rpc_run()
         DeployNode.wait(300)
         self.block_out()
-        self.valid_node()
+        # self.valid_node()
         self.compare_block()
         self.check_block()
 
