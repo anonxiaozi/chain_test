@@ -93,7 +93,7 @@ class EveryOne(object):
                 genesis_result = getattr(genesis, action, DeployNode.echo)()
                 check_action_result(genesis_result, config["genesis"], action, self.logger)
                 if action in ["reset", "start", "init"]:
-                    DeployNode.wait(2)
+                    DeployNode.wait(5)
             for node in node_list:
                 noded_obj = DeployNode(config[node], self.logger)
                 noded_result = getattr(noded_obj, action, DeployNode.echo)()
