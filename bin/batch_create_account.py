@@ -67,18 +67,19 @@ class BatchCreateAccount(RunCmd):
 if __name__ == "__main__":
     logger = Logger()
     info = {
-        "address": "10.15.101.77",
+        "address": "10.15.101.35",
         "ssh_user": "root",
         "ssh_port": 22,
         "rpc_port": 40001,
         "key": os.path.join(CONFIGDIR, "id_rsa_jump"),
         "nick": 3005,  # 钱包名
         "type": "ecc",  # 账户类型
-        "amount": 10000,  # 转账金额
-        "number": 2  # 创建多少账户
+        "amount": 100000,  # 转账金额
+        "number": 20  # 创建多少账户
     }
     create_obj = BatchCreateAccount(logger, info=info)
     accname_list, accinfo_list = create_obj.batch_create()
-    for n in range(len(accname_list)):
-        print(accname_list[n])
-        print(accinfo_list[n])
+    for accname in accname_list:
+        print(accname)
+    for accinfo in accinfo_list:
+        print(accinfo)
