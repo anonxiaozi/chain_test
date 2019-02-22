@@ -49,7 +49,7 @@ class DeployNode(MySSH):
         """
         清除noded数据
         """
-        clean_cmd = "cd /root/work; ./noded clear -nick %s; rm -f logs/*" % self.node_info["id"]
+        clean_cmd = "cd {0}; ./noded clear -nick {1} -datapath {0}; rm -f logs/*".format(self.node_info["data_path"], self.node_info["id"])
         self.remote_exec(clean_cmd)
         if self.node_info.getboolean("del_wallet"):
             del_wallet_cmd = "cd /root/work; rm -f wallet_%s.dat" % self.node_info["id"]
@@ -139,7 +139,8 @@ class Deposit(object):
         if not account:
             account = "root"
         ssh = self.get_ssh_obj(node_info)
-        get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -nick %s -name %s -password 123456 | grep ': 0x' | awk '{print $NF}'" % (self.node_info["id"], account)
+        get_pubkey_cmd = "cd /root/work; ./cli getwalletkey -nick {} -name {} -password 123456 -datapath {} | grep ': 0x' | awk '{{print $NF}}'".format(
+            self.node_info["id"], account, self.node_info["data_path"])
         result = ssh.remote_exec(get_pubkey_cmd)
         if result:
             return result
@@ -150,7 +151,8 @@ class Deposit(object):
             sys.exit(1)
 
     def get_addr(self, account, node_info):
-        get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname %s -nick %s | awk -F'address : ' '{print $NF}'" % (account, node_info["id"])
+        get_addr_cmd = "cd /root/work; ./cli getwalletinfo -accname {} -nick {} -datapath {} | awk -F'address : ' '{{print $NF}}'".format(
+            account, node_info["id"], node_info["data_path"])
         ssh = self.get_ssh_obj(node_info)
         result = ssh.remote_exec(get_addr_cmd)
         if result.startswith("0x"):
@@ -166,8 +168,8 @@ class Deposit(object):
             account = self.node_info["id"]
         root_addr = self.get_addr("root", self.genesis_info)  # root address
         to_addr = self.get_addr(account, self.node_info)  # deposit account address
-        send_cmd = "cd /root/work; ./cli send -amount {} -from {} -nick {} -toaddr {} -dev 1; echo $?".format(
-            amount, root_addr, self.genesis_info["id"], to_addr)  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
+        send_cmd = "cd /root/work; ./cli send -amount {} -from {} -nick {} -toaddr {} -dev 1 -datapath {}; echo $?".format(
+            amount, root_addr, self.genesis_info["id"], to_addr, self.node_info["data_path"])  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
         if result.split("\n")[-1] != "0":
@@ -183,8 +185,8 @@ class Deposit(object):
         if int(amount) == 0:
             print("Don't deposit [{}]".format(deposit_name))
             return deposit_name
-        deposit_cmd = "cd /root/work; ./cli deposit -amount {} -blsname {} -deposit {} -nick {} -source {} -dev 1".format(
-            amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr)
+        deposit_cmd = "cd /root/work; ./cli deposit -amount {} -blsname {} -deposit {} -nick {} -source {} -dev 1 -datapath {}".format(
+            amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr, self.node_info["data_path"])
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
         print("Deposit result [{}]:".format(deposit_name))
@@ -307,7 +309,8 @@ class Config(object):
             "del_wallet": False,
             "create_wallet": 0,
             "deposit": False,
-            "init_cmd": "cd /root/work; ./noded init -account root -role miner -nick 3005 -genesis 1 -createwallet 0 -dev 1 ; echo $?",
+            "data_path": "~/.pb_data",
+            "init_cmd": "cd /root/work; ./noded init -account root -role miner -nick 3005 -genesis 1 -createwallet 0 -dev 1; echo $?",
             "start_cmd": "cd /root/work; nohup ./noded run -account root -nick 3005 -role miner -addr 10.15.101.114:3005 -rpc 1 \
                              -rpcaddr 0.0.0.0:40001 -dev 1 &> /dev/null &"
         }
@@ -323,6 +326,7 @@ class Config(object):
                 "deposit": True,
                 "deposit_amount": 10000,
                 "cli_rpc_port": 60002,
+                "data_path": "~/.pb_data",
                 "init_cmd": "noded init...",
                 "start_cmd": "noded run..."
             }
@@ -335,6 +339,7 @@ class Config(object):
                 "id": "300%d" % i,
                 "del_wallet": False,
                 "rpc_port": 60002,
+                "data_path": "~/.pb_data",
                 "start_cmd": "cli service..."
             }
         self.write()

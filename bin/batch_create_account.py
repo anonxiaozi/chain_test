@@ -67,7 +67,7 @@ class BatchCreateAccount(RunCmd):
 if __name__ == "__main__":
     logger = Logger()
     info = {
-        "address": "10.15.101.35",
+        "address": "10.15.101.77",
         "ssh_user": "root",
         "ssh_port": 22,
         "rpc_port": 40001,
