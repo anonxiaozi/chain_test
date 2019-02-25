@@ -24,7 +24,7 @@ class DeployNode(MySSH):
     """
 
     stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
-    get_faild_info = "cd /root/work/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
+    get_faild_info = "cd {data_path}/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
     def __init__(self, node_info, logger):
         self.logger = logger
@@ -49,10 +49,10 @@ class DeployNode(MySSH):
         """
         清除noded数据
         """
-        clean_cmd = "cd {0}; ./noded clear -nick {1} -datapath {0}; rm -f logs/*".format(self.node_info["data_path"], self.node_info["id"])
+        clean_cmd = "cd /root/work; ./noded clear -nick {id} -datapath {data_path}; rm -f {data_path}/logs/*".format(**self.node_info)
         self.remote_exec(clean_cmd)
         if self.node_info.getboolean("del_wallet"):
-            del_wallet_cmd = "cd /root/work; rm -f wallet_%s.dat" % self.node_info["id"]
+            del_wallet_cmd = "cd /root/work; rm -f {data_path}/wallet_{id}.dat".format(**self.node_info)
             self.remote_exec(del_wallet_cmd)
 
     def stop(self):
@@ -74,14 +74,14 @@ class DeployNode(MySSH):
         if start_status:
             return start_status
         else:
-            data = "start noded [%s] successfully." % self.node_info["address"]
+            data = "start noded [{address}] successfully.".format(**self.node_info)
             self.logger.info(data)
             print(data)
 
     def status(self):
-        result = self.remote_exec("pgrep -a noded$ | grep %s &> /dev/null ; echo $?" % self.node_info["id"])
+        result = self.remote_exec("pgrep -a noded$ | grep {id} &> /dev/null ; echo $?".format(**self.node_info))
         if result != "0":
-            faild_info = self.remote_exec(self.get_faild_info % self.node_info["id"])
+            faild_info = self.remote_exec(self.get_faild_info.format(**self.node_info))
             return faild_info.split("\n")  # 启动失败，返回日志中panic信息，列表类型
 
     @staticmethod
@@ -185,8 +185,8 @@ class Deposit(object):
         if int(amount) == 0:
             print("Don't deposit [{}]".format(deposit_name))
             return deposit_name
-        deposit_cmd = "cd /root/work; ./cli deposit -amount {} -blsname {} -deposit {} -nick {} -source {} -dev 1 -datapath {}".format(
-            amount, self.node_info["id"], deposit_name, self.node_info["id"], source_addr, self.node_info["data_path"])
+        deposit_cmd = "cd /root/work; ./cli deposit -amount {} -blsname {} -nick {} -source {} -dev 1 -datapath {}".format(
+            amount, self.node_info["id"], self.node_info["id"], source_addr, self.node_info["data_path"])
         ssh = self.get_ssh_obj(self.node_info)
         result = ssh.remote_exec(deposit_cmd)
         print("Deposit result [{}]:".format(deposit_name))
@@ -202,7 +202,7 @@ class DeployCli(MySSH):
         stop： 停止cli
     """
     match_id = re.compile(r'-nick\s+?(\d+?)\s')
-    get_faild_info = "cd /root/work; grep -i -E 'panic|warn' cli_%s.log"
+    get_faild_info = "cd {data_path}; grep -i -E 'panic|warn' cli_{id}.log"
 
     def __init__(self, cli_info, logger):
         super().__init__(cli_info["address"], cli_info["ssh_user"], cli_info["ssh_key"], cli_info.getint("ssh_port"), logger)
@@ -218,7 +218,7 @@ class DeployCli(MySSH):
         if start_id and self.cli_info["id"] in start_id:
             return
         else:
-            data = self.remote_exec(self.get_faild_info % self.cli_info["id"])
+            data = self.remote_exec(self.get_faild_info.format(**self.cli_info))
             self.logger.error(data)
             return data.split("\n")  # 返回错误信息
 
@@ -366,6 +366,10 @@ def check_action_result(result, config, action, logger):
         if result and result != "Hello.":
             data = "%s %s [%s] faild. Error:" % (action, config.name, config["address"])
             logger.error(data)
+            if isinstance(result, str):
+                print(result)
+                logger.error(result)
+                return result
             for err in result:
                 print(err)
             else:

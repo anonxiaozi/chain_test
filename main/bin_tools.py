@@ -107,6 +107,7 @@ class EveryOne(object):
                         deposit.send()
                         deposit_id = deposit.deposit()
                         print("Deposit id [%s]: %s" % (config[node]["id"], deposit_id))
+                        DeployNode.wait(2)
             cli_list.extend([x for x in config.keys() if x.startswith("cli")])
             for cli in cli_list:
                 client = DeployCli(config[cli], self.logger)

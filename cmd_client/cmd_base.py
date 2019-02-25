@@ -27,6 +27,7 @@ class RunCmd(object):
         arg.add_argument("-p", "--port", type=int, help="服务器端口,默认为: %(default)s", default=22)
         arg.add_argument("-u", "--user", help="SSH登陆用户名，默认为: %(default)s", default="root")
         arg.add_argument("-k", "--key", type=str, help="SSH密钥存放位置，默认为:%(default)s", default=os.path.join(CONFIGDIR, "id_rsa_jump"), required=False)
+        arg.add_argument("--data-path", type=str, help="数据目录路径，默认为：%(default)s", default="/root/.pb_data", required=False)
         return arg
 
     def get_ssh(self):

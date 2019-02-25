@@ -66,14 +66,18 @@ if __name__ == '__main__':
         sys.exit(0)
     try:
         run = EveryOne(args, logger)
-        getattr(run, "do_%s" % args["sub"])()
+        getattr(run, "do_{}".format(args["sub"]))()
     except KeyboardInterrupt:
         print("\nExit.")
     except KeyError as e:
-        print("KeyError: %s" % e)
+        logger.error("KeyError: {}".format(e))
+        print("KeyError: {}".format(e))
     except AttributeError as e:
-        print("AttributeError: %s" % e)
+        logger.error("AttributeError: {}".format(e))
+        print("AttributeError: {}".format(e))
     except Exception as e:
+        logger.error("Error: {}".format(e))
         print("Error: %s" % e)
     finally:
+        logger.warning("Exit.")
         sys.exit()
