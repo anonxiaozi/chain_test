@@ -24,7 +24,7 @@ class DeployNode(MySSH):
     """
 
     stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
-    get_faild_info = "cd {data_path}/logs; data=`ls -lt | grep node_%s | head -1 | awk '{print $NF}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
+    get_faild_info = "cd {data_path}/logs; data=`ls -lt | grep node_{id} | head -1 | awk '{{print $NF}}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
     def __init__(self, node_info, logger):
         self.logger = logger

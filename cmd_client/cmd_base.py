@@ -74,10 +74,11 @@ class RunCmd(object):
         self.arg = self.get_args()
         self.arg.add_argument("--name", help="钱包名称", required=True)
         self.arg.add_argument("--nick", help="标识钱包id，默认为: %(default)s", default="pb")
+        self.arg.add_argument("--type", choices=["ecc", "bls"], help="钱包类型：[ecc, bls]", required=True)
 
     def getwalletkey(self):
         self.get_ssh()
-        getwalletkey_cmd = "cli getwalletkey -dev 1 -name {name} -nick {nick} | grep INFO | tail -n 1 | awk -F'{nick}: ' '{{print $2}}'".format(**self.args)
+        getwalletkey_cmd = "cli getwalletkey -dev 1 -name {name} -nick {nick} -type {type} | grep INFO | tail -n 1 | awk -F'{nick}: ' '{{print $2}}'".format(**self.args)
         return self.ssh.remote_exec(getwalletkey_cmd, self.check)
 
     def convert_args(self):
@@ -88,8 +89,8 @@ class RunCmd(object):
 
     def convert(self):
         self.get_ssh()
-        convert_cmd = "cli convert -from {from} -method {method} -nick {nick} | grep INFO | tail -n 1 | awk -F'client_{nick}: ' '{{print $2}}'".format(**self.args)
-        return self.ssh.remote_exec(convert_cmd, self.check)
+        convert_cmd = "cli convert -from {from} -method {method} -nick {nick} | grep INFO | tail -n 1 | awk -F'to depositid: ' '{{print $2}}'".format(**self.args)
+        return self.ssh.remote_exec(convert_cmd, self.check).strip("{}")
 
     def send_args(self):
         self.arg = self.get_args()
@@ -193,7 +194,7 @@ class RunCmd(object):
 
 if __name__ == "__main__":
     logger = Logger()
-    method = "getwalletinfo"
+    method = "getwalletkey"
     run = RunCmd(logger)
     getattr(run, "%s_args" % method)()
     run.args = vars(run.arg.parse_args())

@@ -4,7 +4,7 @@
 
 """
 通过质押ID获取账户的质押信息，使用GetDepositAccount接口，返回结果：
-{'root': {'DepositID': {'Value': '6051053228330400958'}, 'Amount': '10000'}, '3006': {'DepositID': {'Value': '9384355224946534474'}, 'Amount': '10000'}}
+{'15123803854968883527': {'DepositID': {'Value': '15123803854968883527'}, 'Amount': '10000'}, '7219235993441038773': {'DepositID': {'Value': '7219235993441038773'}, 'Amount': '10000'}}
 """
 
 import sys
@@ -23,7 +23,7 @@ class GetDepositAccount(RPCTest):
         super().__init__(logger)
         self.start_method = "GetDepositAccount"
         self.start_sign = None
-        self.arg.add_argument("-a", "--accounts", help="质押账号，多个账号用逗号分隔", required=True)
+        self.arg.add_argument("-a", "--accounts", help="质押ID，多个ID用逗号分隔", required=True)
         self.arg.add_argument("-f", "--field", help="需要返回的字段", required=False)
 
     @staticmethod
@@ -41,6 +41,7 @@ class GetDepositAccount(RPCTest):
         for value, body in data:
             deposit_map[value] = {}
             result = func.cli_api(body)
+            # print("Result: ", result)
             if "DepositID" in result:
                 if "field" in self.args:
                     if self.args["field"]:

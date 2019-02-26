@@ -15,7 +15,9 @@ CONFIGDIR = os.path.join(BASEDIR, "conf")
 sys.path.insert(0, BASEDIR)
 from rpc_client.base import RPCTest
 from rpc_client.GetDepositID import GetDepositID
+from rpc_client.GetBlockInfoByHeight import GetBlockInfoByHeight
 from rpc_client.GetDepositAccount import GetDepositAccount
+from cmd_client.cmd_base import RunCmd
 import json
 from main.logger import Logger
 
@@ -37,58 +39,101 @@ class GetDepositScale(RPCTest):
         self.deposit_id_map = deposit.status()
         self.deposit_id_count_map = {x: 0 for x in self.deposit_id_map.values()}
 
-    @staticmethod
-    def change_height_body(key, values):
-        for value in range(values + 1):
-            body = {
-                key: str(value)
-            }
-            yield value, body
+    def get_deposit_from_pubkey(self, accounts):
+        """
+        获取账号的pubkey，然后将pubkey转换为DepositID
+        """
+        deposit_id_account_map = {}
+        cmd = RunCmd(self.logger)
+        cmd.args = {
+            "host": self.args["host"],
+            "port": 22,
+            "user": "root",
+            "key": os.path.join(CONFIGDIR, "id_rsa_jump"),
+            "data-path": "/root/.pb_data",
+            "method": "str2depositid",
+            "type": "bls"
+        }
+        for account in accounts.strip().split(","):
+            cmd.args["name"] = account
+            if account == "root":
+                cmd.args["nick"] = 3005
+            else:
+                cmd.args["nick"] = account
+            pubkey = cmd.run("getwalletkey", self.logger)  # 获取公钥
+            if not pubkey.startswith("0x"):
+                print("Get pubkey faild: {} [{}]".format(pubkey, account))
+                self.logger.error("Get pubkey faild: {} [{}]".format(pubkey, account))
+                continue
+            cmd.args["from"] = pubkey
+            deposit_id = cmd.run("convert", self.logger)  # 获取质押ID
+            deposit_id_account_map[account] = deposit_id
+        else:
+            deposit_id_count_map = {x: 0 for x in deposit_id_account_map.values()}
+        return deposit_id_account_map, deposit_id_count_map
+
+    def get_depositid_from_block(self, block_info):
+        """
+        从块信息中获取DepositID
+        :return: 如果块信息中存在DepositID，则返回(DepositID, True)，否则返回(error_info, False)
+        """
+        if isinstance(block_info, dict):
+            try:
+                deposit_id = block_info["DepositID"]["Value"]
+                return deposit_id, True
+            except Exception as e:
+                echo = "Faild get DepositID from block_info: {}".format(e)
+                self.logger.error(echo)
+                print(e)
+                return block_info
+        else:
+            self.logger.error("Get block info failed: {}".format(block_info))
+            return block_info, False
 
     def get_block_info(self):
         """
         首先根据get_current_height来获取当前块高度，然后循环每个块信息
         """
-        sign = 1
+        self.deposit_id_account_map, self.deposit_id_count_map = \
+            self.get_deposit_from_pubkey(self.args["accounts"])
+        info_dict = {
+            account_name: {
+                "DepositID": self.deposit_id_account_map[account_name],
+                "Amount": "",
+                "Count": "",
+                "Scale": ""
+            } for account_name in self.deposit_id_account_map
+        }  # 最终结果，{account: {DepositID: "", Amount: "", "Count": "", "Scale": ""}}
+        fail_sign = 1
         height = self.get_current_height()
-        method = "GetBlockInfoByHeight"
-        func = self.get_test_obj(method, None)
-        bodys = self.change_height_body("Key", height)
-        self.args["field"] = "Amount"
+        block_obj = GetBlockInfoByHeight(self.logger)
+        block_obj.args = self.args
+        for i in range(height):  # 循环所有块
+            if fail_sign > 10:
+                sys.exit(1)  # 出现10次获取块信息错误，停止获取块信息
+            block_obj.args["number"] = i
+            block_info = block_obj.run()
+            deposit_id, get_signal = self.get_depositid_from_block(block_info)  # 获取块信息中的DepositID
+            print(i, "[ {} ]".format(deposit_id), sep=" --> ")
+            if not get_signal:
+                fail_sign += 1
+                continue
+            if deposit_id in self.deposit_id_count_map:
+                self.deposit_id_count_map[deposit_id] += 1
         get_deposit_amount = GetDepositAccount(self.logger)
         get_deposit_amount.args = self.args
-        deposit_amount = get_deposit_amount.run()
-        for key, body in bodys:
-            if sign > 10:
-                sys.exit(1)  # 出现10次获取块信息错误，停止获取块信息
-            body = json.dumps(body).encode("utf-8")
-            result = func.cli_api(body)
-            if not self.check_result(result):
-                print("Retry...".center(50, "*"))
-                self.check_result(result)
-            try:
-                deposit_id = result["DepositID"]["Value"]
-                if deposit_id in self.deposit_id_count_map:
-                    self.deposit_id_count_map[deposit_id] += 1
-                else:
-                    self.deposit_id_count_map[deposit_id] = 1
-                print(str(key).center(10), end=' -->    ')
-                print("[%s]" % deposit_id)
-            except Exception:
-                print(result)
-                sign += 1
+        get_deposit_amount.args["accounts"] = ",".join(self.deposit_id_count_map.keys())
+        get_deposit_amount.args["field"] = "Amount"
+        self.deposit_amount_map = get_deposit_amount.run()
+        reverse_deposit_id_account_map = {x: y for y, x in self.deposit_id_account_map.items()}
+        for deposit_id, account_name in reverse_deposit_id_account_map.items():
+            info_dict[account_name]["Amount"] = self.deposit_amount_map[deposit_id]
+            info_dict[account_name]["Count"] = self.deposit_id_count_map[deposit_id]
+            info_dict[account_name]["Scale"] = "{:.2%}".format(self.deposit_id_count_map[deposit_id] / height)
         else:
-            print(("Block Height [ %s ]" % height).center(100, "="))
-            self.logger.info(("Block Height [ %s ]" % height).center(100, "="))
-            reverse_deposit_id_map = {x: y for y, x in self.deposit_id_map.items()}
-            relate_name_count = {
-                reverse_deposit_id_map[x]: {
-                    "Count": self.deposit_id_count_map[x],
-                    "Amount": deposit_amount[reverse_deposit_id_map[x]],
-                    "Scale": "{:.2%}".format(self.deposit_id_count_map[x] / height)
-                } for x in self.deposit_id_count_map if x in self.deposit_id_map.values()}
-            self.logger.info("[O] {}".format(relate_name_count))
-            return relate_name_count
+            self.logger.info("[O] {}".format(info_dict))
+
+        return info_dict
 
     def get_current_height(self):
         """
@@ -103,6 +148,7 @@ class GetDepositScale(RPCTest):
         try:
             height = int(result["Height"])
             print(("Block Height [ %s ]" % height).center(100, "="))
+            self.logger.info(("Block Height [ %s ]" % height).center(100, "="))
             return height
         except Exception:
             print(result)
