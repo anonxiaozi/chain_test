@@ -99,15 +99,15 @@ class EveryOne(object):
                 noded_result = getattr(noded_obj, action, DeployNode.echo)()
                 check_action_result(noded_result, config[node], action, self.logger)
             if action == "init":
-                DeployNode.wait(3)
+                DeployNode.wait(6)
                 for node in node_list:
-                    print(("Start deposit... [%s]" % node).center(50, '*'))
                     if config[node].getboolean("deposit"):
+                        print(("Start deposit... [%s]" % node).center(50, '*'))
                         deposit = Deposit(config["genesis"], config[node], self.logger)
                         deposit.send()
                         deposit_id = deposit.deposit()
                         print("Deposit id [%s]: %s" % (config[node]["id"], deposit_id))
-                        DeployNode.wait(2)
+                        DeployNode.wait(3)
             cli_list.extend([x for x in config.keys() if x.startswith("cli")])
             for cli in cli_list:
                 client = DeployCli(config[cli], self.logger)

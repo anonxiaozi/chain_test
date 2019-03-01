@@ -144,6 +144,7 @@ class GetDepositScale(RPCTest):
         result = func.cli_api()
         if not self.check_result(result):  # 获取失败后，尝试重试一次
             print("Retry...".center(50, "*"))
+            result = func.cli_api()
             self.check_result(result)
         try:
             height = int(result["Height"])
@@ -159,13 +160,16 @@ class GetDepositScale(RPCTest):
         """
         检查接口返回的信息是否正确
         """
+        if not result:
+            echo = "Failed get node status."
+            print(echo)
+            return result
         if "message" in result:
             if "cannot be send tx to node currently" in result["message"]:
                 print(result)
             else:
                 return result
-        else:
-            return result
+        return result
 
     def run(self):
         self.get_block_depositid()

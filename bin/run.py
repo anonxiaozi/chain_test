@@ -80,4 +80,3 @@ if __name__ == '__main__':
         print("Error: %s" % e)
     finally:
         logger.warning("Exit.")
-        sys.exit()

@@ -23,7 +23,7 @@ class DeployNode(MySSH):
     start: 启动节点
     """
 
-    stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
+    stop_cmd = 'kill $(pgrep noded$) &> /dev/null'
     get_faild_info = "cd {data_path}/logs; data=`ls -lt | grep node_{id} | head -1 | awk '{{print $NF}}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
     def __init__(self, node_info, logger):
@@ -59,7 +59,18 @@ class DeployNode(MySSH):
         """
         停止noded进程
         """
-        self.remote_exec(self.stop_cmd + '&> /dev/null')
+        for i in range(5):
+            self.remote_exec(self.stop_cmd + '&> /dev/null')
+            check_status = self.remote_exec("pgrep -a noded$ | grep {id} &> /dev/null ; echo $?".format(**self.node_info))
+            if check_status == "0":
+                echo = "Retry Stop {} [ {} ]".format(self.node_info.name, i)
+                self.logger.warning(echo)
+                print(echo)
+                continue
+        else:
+            echo = "Stop {} failed.".format(self.node_info.name)
+            self.logger.error(echo)
+            print(echo)
 
     def start(self):
         """
@@ -172,11 +183,6 @@ class Deposit(object):
             amount, root_addr, self.genesis_info["id"], to_addr, self.node_info["data_path"])  # 由于send操作直接在genesis node上做，所以不需要指定noderpcaddr和noderpcport
         ssh = self.get_ssh_obj(self.genesis_info)
         result = ssh.remote_exec(send_cmd)
-        if result.split("\n")[-1] != "0":
-            data = "send failed. [ %s ]" % send_cmd
-            self.logger.error("{} Exit...".format(data))
-            print(data)
-            sys.exit(1)
 
     def deposit(self):
         deposit_name = self.node_info["id"]
@@ -210,7 +216,20 @@ class DeployCli(MySSH):
         self.logger = logger
 
     def stop(self):
-        self.remote_exec('kill -9 $(pgrep pbcli$) &> /dev/null')
+        stop_cmd = 'kill $(pgrep pbcli$) &> /dev/null'
+        check_cmd = 'pgrep ^pbcli$ &> /dev/null ; echo $?'
+        for i in range(5):
+            self.remote_exec(stop_cmd)
+            check_status = self.remote_exec(check_cmd)
+            if check_status == "0":
+                echo = "Retry Stop {} [ {} ]".format(self.cli_info.name, i)
+                self.logger.warning(echo)
+                print(echo)
+                continue
+        else:
+            echo = "Stop {} faild.".format(self.cli_info.name)
+            self.logger.error(echo)
+            print(echo)
 
     def status(self):
         result = self.remote_exec('pgrep -a ^pbcli$')

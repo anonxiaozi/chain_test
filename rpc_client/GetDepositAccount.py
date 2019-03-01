@@ -41,7 +41,9 @@ class GetDepositAccount(RPCTest):
         for value, body in data:
             deposit_map[value] = {}
             result = func.cli_api(body)
-            # print("Result: ", result)
+            if not result:
+                deposit_map[value] = "00000000000000000000000000"
+                continue
             if "DepositID" in result:
                 if "field" in self.args:
                     if self.args["field"]:
