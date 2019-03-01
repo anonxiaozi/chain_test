@@ -67,6 +67,8 @@ class DeployNode(MySSH):
                 self.logger.warning(echo)
                 print(echo)
                 continue
+            else:
+                return
         else:
             echo = "Stop {} failed.".format(self.node_info.name)
             self.logger.error(echo)
@@ -226,6 +228,8 @@ class DeployCli(MySSH):
                 self.logger.warning(echo)
                 print(echo)
                 continue
+            else:
+                return
         else:
             echo = "Stop {} faild.".format(self.cli_info.name)
             self.logger.error(echo)

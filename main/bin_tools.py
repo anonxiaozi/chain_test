@@ -88,31 +88,44 @@ class EveryOne(object):
             return data
         else:
             node_list.extend([x for x in config.keys() if x.startswith("node")])
-            if "genesis" in config:
-                genesis = DeployNode(config["genesis"], self.logger)
-                genesis_result = getattr(genesis, action, DeployNode.echo)()
-                check_action_result(genesis_result, config["genesis"], action, self.logger)
-                if action in ["reset", "start", "init"]:
-                    DeployNode.wait(5)
-            for node in node_list:
-                noded_obj = DeployNode(config[node], self.logger)
-                noded_result = getattr(noded_obj, action, DeployNode.echo)()
-                check_action_result(noded_result, config[node], action, self.logger)
-            if action == "init":
-                DeployNode.wait(6)
-                for node in node_list:
-                    if config[node].getboolean("deposit"):
-                        print(("Start deposit... [%s]" % node).center(50, '*'))
-                        deposit = Deposit(config["genesis"], config[node], self.logger)
-                        deposit.send()
-                        deposit_id = deposit.deposit()
-                        print("Deposit id [%s]: %s" % (config[node]["id"], deposit_id))
-                        DeployNode.wait(3)
             cli_list.extend([x for x in config.keys() if x.startswith("cli")])
-            for cli in cli_list:
-                client = DeployCli(config[cli], self.logger)
-                client_result = getattr(client, action, DeployNode.echo)()
-                check_action_result(client_result, config[cli], action, self.logger)
+            if action == "stop":  # stop，先stop cli，之后stop noded
+                for cli in cli_list:
+                    client = DeployCli(config[cli], self.logger)
+                    client_result = getattr(client, action, DeployNode.echo)()
+                    check_action_result(client_result, config[cli], action, self.logger)
+                else:
+                    if "genesis" in config:
+                        node_list.insert(0, "genesis")
+                        for node in node_list:
+                            noded_obj = DeployNode(config[node], self.logger)
+                            noded_result = getattr(noded_obj, action, DeployNode.echo)()
+                            check_action_result(noded_result, config[node], action, self.logger)
+            else:  # 除了stop动作之外，都是先操作noded，然后是cli
+                if "genesis" in config:
+                    genesis = DeployNode(config["genesis"], self.logger)
+                    genesis_result = getattr(genesis, action, DeployNode.echo)()
+                    check_action_result(genesis_result, config["genesis"], action, self.logger)
+                    if action in ["reset", "start", "init"]:
+                        DeployNode.wait(5)
+                for node in node_list:
+                    noded_obj = DeployNode(config[node], self.logger)
+                    noded_result = getattr(noded_obj, action, DeployNode.echo)()
+                    check_action_result(noded_result, config[node], action, self.logger)
+                if action == "init":
+                    DeployNode.wait(6)
+                    for node in node_list:
+                        if config[node].getboolean("deposit"):
+                            print(("Start deposit... [%s]" % node).center(50, '*'))
+                            deposit = Deposit(config["genesis"], config[node], self.logger)
+                            deposit.send()
+                            deposit_id = deposit.deposit()
+                            print("Deposit id [%s]: %s" % (config[node]["id"], deposit_id))
+                            DeployNode.wait(3)
+                for cli in cli_list:
+                    client = DeployCli(config[cli], self.logger)
+                    client_result = getattr(client, action, DeployNode.echo)()
+                    check_action_result(client_result, config[cli], action, self.logger)
             return 0
 
     def do_read_config(self):
