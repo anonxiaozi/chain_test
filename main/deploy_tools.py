@@ -59,10 +59,11 @@ class DeployNode(MySSH):
         """
         停止noded进程
         """
-        for i in range(5):
-            self.remote_exec(self.stop_cmd + '&> /dev/null')
+        self.remote_exec(self.stop_cmd + '&> /dev/null')
+        for i in range(1, 6):
             check_status = self.remote_exec("pgrep -a noded$ | grep {id} &> /dev/null ; echo $?".format(**self.node_info))
             if check_status == "0":
+                self.remote_exec(self.stop_cmd + '&> /dev/null')
                 echo = "Retry Stop {} [ {} ]".format(self.node_info.name, i)
                 self.logger.warning(echo)
                 print(echo)
@@ -210,7 +211,7 @@ class DeployCli(MySSH):
         stop： 停止cli
     """
     match_id = re.compile(r'-nick\s+?(\d+?)\s')
-    get_faild_info = "cd {data_path}; grep -i -E 'panic|warn' cli_{id}.log"
+    get_faild_info = "cd {data_path}; grep -i -E 'panic|warn' cli_{id}.log 2> /dev/null"
 
     def __init__(self, cli_info, logger):
         super().__init__(cli_info["address"], cli_info["ssh_user"], cli_info["ssh_key"], cli_info.getint("ssh_port"), logger)
@@ -220,10 +221,11 @@ class DeployCli(MySSH):
     def stop(self):
         stop_cmd = 'kill $(pgrep pbcli$) &> /dev/null'
         check_cmd = 'pgrep ^pbcli$ &> /dev/null ; echo $?'
-        for i in range(5):
-            self.remote_exec(stop_cmd)
+        self.remote_exec(stop_cmd)
+        for i in range(1, 6):
             check_status = self.remote_exec(check_cmd)
             if check_status == "0":
+                self.remote_exec(stop_cmd)
                 echo = "Retry Stop {} [ {} ]".format(self.cli_info.name, i)
                 self.logger.warning(echo)
                 print(echo)
