@@ -23,7 +23,7 @@ class DeployNode(MySSH):
     start: 启动节点
     """
 
-    stop_cmd = 'kill $(pgrep noded$) &> /dev/null'
+    stop_cmd = 'kill -9 $(pgrep noded$) &> /dev/null'
     get_faild_info = "cd {data_path}/logs; data=`ls -lt | grep node_{id} | head -1 | awk '{{print $NF}}'`; if [ ! -z $data ]; then grep -i -E 'panic|warn' $data; else echo Nothing; fi"
 
     def __init__(self, node_info, logger):
@@ -60,13 +60,14 @@ class DeployNode(MySSH):
         停止noded进程
         """
         self.remote_exec(self.stop_cmd + '&> /dev/null')
-        for i in range(1, 6):
+        for i in range(1, 11):
             check_status = self.remote_exec("pgrep -a noded$ | grep {id} &> /dev/null ; echo $?".format(**self.node_info))
             if check_status == "0":
                 self.remote_exec(self.stop_cmd + '&> /dev/null')
                 echo = "Retry Stop {} [ {} ]".format(self.node_info.name, i)
                 self.logger.warning(echo)
                 print(echo)
+                time.sleep(1)
                 continue
             else:
                 return
@@ -74,6 +75,7 @@ class DeployNode(MySSH):
             echo = "Stop {} failed.".format(self.node_info.name)
             self.logger.error(echo)
             print(echo)
+            return echo
 
     def start(self):
         """
