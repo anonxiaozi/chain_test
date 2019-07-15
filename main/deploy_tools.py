@@ -36,6 +36,8 @@ class DeployNode(MySSH):
         初始化节点
         """
         self.check_mongo()
+        if self.node_info['init_sql']:
+            self.remote_exec(self.node_info['init_sql'])
         result = self.remote_exec(self.node_info["init_cmd"])
         if result.startswith("[CheckWarning]"):
             return result
